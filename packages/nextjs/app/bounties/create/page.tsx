@@ -1,10 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
 import lighthouse from "@lighthouse-web3/sdk";
 import { parseEther } from "viem";
 import { useAccount } from "wagmi";
+import {
+  ChatBubbleLeftRightIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon,
+  PencilSquareIcon,
+  RocketLaunchIcon,
+  ShieldExclamationIcon,
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
 import { AddressInput, EtherInput } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
@@ -16,6 +25,29 @@ type BountyForm = {
   projectAddress: string;
   severity: "Low" | "Medium" | "High" | "Critical";
 };
+
+type FormFieldProps = {
+  label: string;
+  icon: ReactNode;
+  helperText?: string;
+  children: ReactNode;
+};
+
+const FormField = ({ label, icon, helperText, children }: FormFieldProps) => (
+  <div>
+    <label className="label">
+      <span className="label-text flex items-center gap-2 text-base">
+        {icon} {label}
+      </span>
+    </label>
+    {children}
+    {helperText && (
+      <label className="label">
+        <span className="label-text-alt">{helperText}</span>
+      </label>
+    )}
+  </div>
+);
 
 export default function CreateBountyPage() {
   const router = useRouter();
@@ -29,120 +61,138 @@ export default function CreateBountyPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // SE-2 hook for writing to BountyFactory contract
-  const { writeContractAsync: writeBountyFactoryAsync } = useScaffoldWriteContract({
-    contractName: "BountyFactory",
-  });
+  const { writeContractAsync: writeBountyFactoryAsync } = useScaffoldWriteContract("BountyFactory");
 
-  // Upload bounty metadata to IPFS using Lighthouse
-  const uploadToIPFS = async (metadata: Omit<BountyForm, "amount" | "projectAddress">) => {
-    try {
-      const apiKey = process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY; // Set this in your .env.local
-      const response = await lighthouse.uploadText(JSON.stringify(metadata), apiKey || "");
-      return response.data.Hash;
-    } catch (error) {
-      notification.error("Failed to upload to IPFS");
-      throw error;
-    }
-  };
-
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.amount || parseFloat(form.amount) <= 0) {
+      notification.error("Bounty amount must be greater than 0.");
+      return;
+    }
+    if (!form.projectAddress) {
+      notification.error("Project Address (Owner) is required.");
+      return;
+    }
     setIsSubmitting(true);
     try {
-      // Upload metadata to IPFS
-      const cid = await uploadToIPFS({
-        title: form.title,
-        description: form.description,
-        severity: form.severity,
-      });
+      const apiKey = process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY;
+      if (!apiKey) throw new Error("Lighthouse API key is not set in .env.local");
 
-      // Call BountyFactory to create the bounty
+      notification.info("Uploading bounty details to IPFS...");
+      const response = await lighthouse.uploadText(
+        JSON.stringify({
+          title: form.title,
+          description: form.description,
+          severity: form.severity,
+        }),
+        apiKey,
+      );
+      const cid = response.data.Hash;
+      notification.success("Details uploaded to IPFS!");
+
       await writeBountyFactoryAsync({
         functionName: "createBounty",
         args: [form.projectAddress, cid],
         value: parseEther(form.amount),
       });
 
-      notification.success("Bounty created successfully!");
+      notification.success("Bounty created successfully! Redirecting...");
       router.push("/bounties");
     } catch (error) {
-      notification.error("Failed to create bounty");
-      console.error(error);
+      console.error("Failed to create bounty:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Create a New Bounty</h1>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Title */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-          <input
-            type="text"
-            value={form.title}
-            onChange={e => setForm({ ...form, title: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="e.g., Smart Contract Reentrancy Bug"
-            required
-          />
-        </div>
+    <div className="container mx-auto px-4 py-10">
+      <div className="card max-w-3xl mx-auto bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center gap-2 mb-4">
+            <PencilSquareIcon className="h-8 w-8" />
+            <h1 className="card-title text-3xl">Create a New Bounty</h1>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <FormField label="Title" icon={<DocumentTextIcon className="h-5 w-5" />}>
+              <input
+                type="text"
+                value={form.title}
+                onChange={e => setForm({ ...form, title: e.target.value })}
+                className="input input-bordered w-full rounded-md"
+                placeholder="e.g., Smart Contract Reentrancy Bug"
+                required
+              />
+            </FormField>
 
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <textarea
-            value={form.description}
-            onChange={e => setForm({ ...form, description: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            rows={5}
-            placeholder="Describe the scope and requirements for this bounty..."
-            required
-          />
-        </div>
+            <FormField label="Description" icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />}>
+              <textarea
+                value={form.description}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+                className="textarea textarea-bordered w-full text-base rounded-md"
+                rows={6}
+                placeholder="Describe the scope, vulnerability impact, and requirements for this bounty..."
+                required
+              />
+            </FormField>
 
-        {/* Amount */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Bounty Amount (ETH)</label>
-          <EtherInput value={form.amount} onChange={value => setForm({ ...form, amount: value })} placeholder="0.1" />
-        </div>
+            <div className="divider">Bounty Parameters</div>
 
-        {/* Project Address */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Project Address</label>
-          <AddressInput value={form.projectAddress} onChange={value => setForm({ ...form, projectAddress: value })} />
-        </div>
+            {/* Grid for amount and severity */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Bounty Amount (ETH)" icon={<CurrencyDollarIcon className="h-5 w-5" />}>
+                <EtherInput
+                  value={form.amount}
+                  onChange={value => setForm({ ...form, amount: value })}
+                  placeholder="0.1"
+                />
+              </FormField>
 
-        {/* Severity */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
-          <select
-            value={form.severity}
-            onChange={e => setForm({ ...form, severity: e.target.value as BountyForm["severity"] })}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Critical">Critical</option>
-          </select>
-        </div>
+              <FormField
+                label="Severity"
+                icon={<ShieldExclamationIcon className="h-5 w-5" />}
+                helperText="How critical is the potential vulnerability?"
+              >
+                <select
+                  value={form.severity}
+                  onChange={e => setForm({ ...form, severity: e.target.value as BountyForm["severity"] })}
+                  className="select select-bordered w-full rounded-md"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              </FormField>
+            </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className={`w-full py-3 px-4 rounded-md text-white font-medium ${
-            isSubmitting ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-          } transition-colors`}
-        >
-          {isSubmitting ? "Creating Bounty..." : "Create Bounty"}
-        </button>
-      </form>
+            <FormField
+              label="Project Address (Bounty Owner)"
+              icon={<UserCircleIcon className="h-5 w-5" />}
+              helperText="This address will own the bounty and has the authority to approve or reject submissions."
+            >
+              <AddressInput
+                value={form.projectAddress}
+                onChange={value => setForm({ ...form, projectAddress: value })}
+                placeholder="The address that will manage the bounty"
+              />
+            </FormField>
+
+            <div className="card-actions justify-end mt-6">
+              <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-lg w-full rounded-md">
+                {isSubmitting ? (
+                  <span className="loading loading-spinner"></span>
+                ) : (
+                  <>
+                    <RocketLaunchIcon className="h-5 w-5" />
+                    Create Bounty
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
