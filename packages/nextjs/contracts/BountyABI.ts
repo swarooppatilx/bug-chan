@@ -23,6 +23,34 @@ export const bountyABI = [
     anonymous: false,
     inputs: [
       { indexed: true, internalType: "address", name: "researcher", type: "address" },
+      { indexed: false, internalType: "uint256", name: "amount", type: "uint256" },
+      { indexed: true, internalType: "address", name: "receiver", type: "address" },
+    ],
+    name: "StakeSlashed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "researcher", type: "address" },
+      { indexed: false, internalType: "uint256", name: "amount", type: "uint256" },
+    ],
+    name: "StakeDeposited",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "researcher", type: "address" },
+      { indexed: false, internalType: "uint256", name: "amount", type: "uint256" },
+    ],
+    name: "StakeRefunded",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "researcher", type: "address" },
       { indexed: false, internalType: "string", name: "reportCid", type: "string" },
     ],
     name: "ReportSubmitted",
@@ -63,6 +91,13 @@ export const bountyABI = [
   },
   {
     inputs: [],
+    name: "minStake",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "owner",
     outputs: [{ internalType: "address", name: "", type: "address" }],
     stateMutability: "view",
@@ -91,6 +126,13 @@ export const bountyABI = [
   },
   {
     inputs: [],
+    name: "stakedAmount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "status",
     outputs: [{ internalType: "enum Bounty.Status", name: "", type: "uint8" }],
     stateMutability: "view",
@@ -99,6 +141,13 @@ export const bountyABI = [
   {
     inputs: [{ internalType: "string", name: "_reportCid", type: "string" }],
     name: "submitReport",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_minStake", type: "uint256" }],
+    name: "setMinStake",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

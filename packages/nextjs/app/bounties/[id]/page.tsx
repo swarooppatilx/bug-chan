@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import lighthouse from "@lighthouse-web3/sdk";
-import { formatEther } from "viem";
+import { formatEther, parseEther } from "viem";
 import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { BugAntIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
@@ -14,8 +14,14 @@ export default function BountyDetailsPage() {
   const { id } = useParams();
   const bountyAddress = id as `0x${string}`;
   const { address: connectedAddress } = useAccount();
-  const [reportFile, setReportFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [severity, setSeverity] = useState("Medium");
+  const [description, setDescription] = useState("");
+  const [contact, setContact] = useState("");
+  const [stakeEth, setStakeEth] = useState("0.01");
   const [metadata, setMetadata] = useState({ title: "Loading...", description: "Loading...", severity: "Medium" });
+  const [newMinStakeEth, setNewMinStakeEth] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const { data: hash, error, isPending, writeContractAsync } = useWriteContract();
 
@@ -27,13 +33,15 @@ export default function BountyDetailsPage() {
       { address: bountyAddress, abi: bountyABI, functionName: "status" },
       { address: bountyAddress, abi: bountyABI, functionName: "reportCid" },
       { address: bountyAddress, abi: bountyABI, functionName: "researcher" },
+      { address: bountyAddress, abi: bountyABI, functionName: "minStake" },
+      { address: bountyAddress, abi: bountyABI, functionName: "stakedAmount" },
     ],
     query: {
       refetchInterval: 5000,
     },
   });
 
-  const [owner, amount, cid, status, reportCid, researcher] = bountyData || [];
+  const [owner, amount, cid, status, reportCid, researcher, minStake] = bountyData || [];
 
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
@@ -72,22 +80,60 @@ export default function BountyDetailsPage() {
     fetchMetadata();
   }, [cid?.result, bountyAddress]);
 
+  const minStakeEth = useMemo(
+    () => (minStake?.result ? formatEther(minStake.result as bigint) : "0.0"),
+    [minStake?.result],
+  );
+
+  useEffect(() => {
+    if (minStake?.result) {
+      setStakeEth(formatEther(minStake.result as bigint));
+    }
+  }, [minStake?.result]);
+
   const handleSubmitReport = async () => {
-    if (!reportFile) return notification.error("Please select a report file");
+    if (!title.trim() || !description.trim()) return notification.error("Please fill in title and description");
+    if (!stakeEth || Number(stakeEth) <= 0) return notification.error("Enter a valid stake amount");
     try {
+      setSubmitting(true);
       const apiKey = process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY;
-      if (!apiKey) throw new Error("Lighthouse API key not set");
+      const payload = {
+        title: title.trim(),
+        severity,
+        description: description.trim(),
+        contact: contact.trim(),
+        bountyAddress,
+        submittedAt: new Date().toISOString(),
+      };
+      const file = new File([JSON.stringify(payload, null, 2)], "bug-report.json", { type: "application/json" });
+      if (!apiKey) throw new Error("Lighthouse API key not set. Please set NEXT_PUBLIC_LIGHTHOUSE_API_KEY.");
       notification.info("Uploading report to IPFS...");
-      const response = await lighthouse.upload(reportFile, apiKey);
+      const response = await lighthouse.upload([file], apiKey);
+      const reportCid: string = response.data.Hash;
       notification.success("Report uploaded!");
+      const valueWei = parseEther(stakeEth as `${string}`);
+      if (minStake?.result && valueWei < (minStake.result as bigint)) {
+        return notification.error(`Stake must be at least ${minStakeEth} ETH`);
+      }
       await writeContractAsync({
         address: bountyAddress,
         abi: bountyABI,
         functionName: "submitReport",
-        args: [response.data.Hash],
+        args: [reportCid],
+        value: valueWei,
       });
+      setTitle("");
+      setSeverity("Medium");
+      setDescription("");
+      setContact("");
     } catch (e: any) {
-      notification.error(e.shortMessage || "Failed to submit report");
+      console.error("submitReport error", e);
+      const msg: string = e?.shortMessage || e?.message || "Failed to submit report";
+      const match = msg.match(/reverted with reason string \"([^\"]+)\"/i) || msg.match(/execution reverted: (.*)$/i);
+      const friendly = match?.[1] || msg;
+      notification.error(friendly);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -95,6 +141,22 @@ export default function BountyDetailsPage() {
     writeContractAsync({ address: bountyAddress, abi: bountyABI, functionName: "approveSubmission" });
   const handleReject = () =>
     writeContractAsync({ address: bountyAddress, abi: bountyABI, functionName: "rejectSubmission" });
+
+  const handleSetMinStake = async () => {
+    if (!newMinStakeEth || Number(newMinStakeEth) < 0) return notification.error("Enter a valid min stake");
+    try {
+      await writeContractAsync({
+        address: bountyAddress,
+        abi: bountyABI,
+        functionName: "setMinStake",
+        args: [parseEther(newMinStakeEth as `${string}`)],
+      });
+      notification.success("Min stake updated");
+      setNewMinStakeEth("");
+    } catch (e: any) {
+      notification.error(e.shortMessage || "Failed to update min stake");
+    }
+  };
 
   const isOwner = connectedAddress === owner?.result;
   const currentStatus = status?.result !== undefined ? BountyStatus[status.result] : "Loading...";
@@ -131,6 +193,14 @@ export default function BountyDetailsPage() {
                 <h3 className="font-medium mb-1 text-base-content/60">Severity</h3>
                 <p>{metadata.severity}</p>
               </div>
+              {isOwner && (
+                <div>
+                  <h3 className="font-medium mb-1 text-base-content/60">Min Stake</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="badge badge-outline">{minStakeEth} ETH</span>
+                  </div>
+                </div>
+              )}
               {cid?.result && (
                 <div className="md:col-span-2">
                   <h3 className="font-medium mb-1 text-base-content/60">Bounty CID</h3>
@@ -154,13 +224,58 @@ export default function BountyDetailsPage() {
               <div className="mt-8 pt-6 border-t border-base-300">
                 <h2 className="card-title mb-4">Submit Vulnerability Report</h2>
                 <div className="space-y-4">
-                  <input
-                    type="file"
-                    onChange={e => setReportFile(e.target.files?.[0] || null)}
-                    className="file-input file-input-bordered w-full"
-                  />
-                  <button onClick={handleSubmitReport} disabled={isPending || !reportFile} className="btn btn-primary">
-                    {isPending ? <span className="loading loading-spinner"></span> : "Submit Report"}
+                  <div className="grid grid-cols-1 gap-4">
+                    <input
+                      type="text"
+                      placeholder="Title"
+                      className="input input-bordered w-full"
+                      value={title}
+                      onChange={e => setTitle(e.target.value)}
+                    />
+                    <select
+                      className="select select-bordered w-full"
+                      value={severity}
+                      onChange={e => setSeverity(e.target.value)}
+                    >
+                      <option>Low</option>
+                      <option>Medium</option>
+                      <option>High</option>
+                      <option>Critical</option>
+                    </select>
+                    <textarea
+                      className="textarea textarea-bordered w-full min-h-32"
+                      placeholder="Describe the vulnerability, reproduction steps, and potential impact..."
+                      value={description}
+                      onChange={e => setDescription(e.target.value)}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Contact (email, Telegram, ENS, etc.)"
+                      className="input input-bordered w-full"
+                      value={contact}
+                      onChange={e => setContact(e.target.value)}
+                    />
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Stake (ETH)</span>
+                        <span className="label-text-alt">Min: {minStakeEth} ETH</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={minStakeEth}
+                        step="0.001"
+                        className="input input-bordered w-full"
+                        value={stakeEth}
+                        onChange={e => setStakeEth(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <button onClick={handleSubmitReport} disabled={isPending || submitting} className="btn btn-primary">
+                    {isPending || submitting ? (
+                      <span className="loading loading-spinner"></span>
+                    ) : (
+                      "Submit Report & Stake"
+                    )}
                   </button>
                 </div>
               </div>
@@ -172,6 +287,26 @@ export default function BountyDetailsPage() {
                 </button>
                 <button onClick={handleReject} disabled={isPending} className="btn btn-error">
                   {isPending ? <span className="loading loading-spinner"></span> : "Reject Submission"}
+                </button>
+              </div>
+            )}
+            {isOwner && (
+              <div className="mt-4 flex items-end gap-2">
+                <div className="form-control w-full max-w-xs">
+                  <label className="label">
+                    <span className="label-text">Update Min Stake (ETH)</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    className="input input-bordered"
+                    value={newMinStakeEth}
+                    onChange={e => setNewMinStakeEth(e.target.value)}
+                  />
+                </div>
+                <button className="btn btn-outline" disabled={isPending || !newMinStakeEth} onClick={handleSetMinStake}>
+                  {isPending ? <span className="loading loading-spinner"></span> : "Set Min Stake"}
                 </button>
               </div>
             )}
