@@ -1,7 +1,7 @@
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
 export const metadata = getMetadata({
-  title: "Block Explorer",
+  title: "BugChan",
   description: "Block Explorer created with 🏗 Scaffold-ETH 2",
 });
 
