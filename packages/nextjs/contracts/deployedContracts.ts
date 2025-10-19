@@ -6,9 +6,40 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 
 const deployedContracts = {
   31337: {
-    YourContract: {
+    BountyFactory: {
       address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       abi: [
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "bountyAddress",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "owner",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "string",
+              name: "cid",
+              type: "string",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "BountyCreated",
+          type: "event",
+        },
         {
           inputs: [
             {
@@ -16,57 +47,13 @@ const deployedContracts = {
               name: "_owner",
               type: "address",
             },
-          ],
-          stateMutability: "nonpayable",
-          type: "constructor",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "address",
-              name: "greetingSetter",
-              type: "address",
-            },
-            {
-              indexed: false,
-              internalType: "string",
-              name: "newGreeting",
-              type: "string",
-            },
-            {
-              indexed: false,
-              internalType: "bool",
-              name: "premium",
-              type: "bool",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "value",
-              type: "uint256",
-            },
-          ],
-          name: "GreetingChange",
-          type: "event",
-        },
-        {
-          inputs: [],
-          name: "greeting",
-          outputs: [
             {
               internalType: "string",
-              name: "",
+              name: "_cid",
               type: "string",
             },
           ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [],
-          name: "owner",
+          name: "createBounty",
           outputs: [
             {
               internalType: "address",
@@ -74,77 +61,40 @@ const deployedContracts = {
               type: "address",
             },
           ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [],
-          name: "premium",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "string",
-              name: "_newGreeting",
-              type: "string",
-            },
-          ],
-          name: "setGreeting",
-          outputs: [],
           stateMutability: "payable",
           type: "function",
         },
         {
-          inputs: [],
-          name: "totalCounter",
-          outputs: [
+          inputs: [
             {
               internalType: "uint256",
               name: "",
               type: "uint256",
             },
           ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
+          name: "deployedBounties",
+          outputs: [
             {
               internalType: "address",
               name: "",
               type: "address",
             },
           ],
-          name: "userGreetingCounter",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
-            },
-          ],
           stateMutability: "view",
           type: "function",
         },
         {
           inputs: [],
-          name: "withdraw",
-          outputs: [],
-          stateMutability: "nonpayable",
+          name: "getDeployedBounties",
+          outputs: [
+            {
+              internalType: "address[]",
+              name: "",
+              type: "address[]",
+            },
+          ],
+          stateMutability: "view",
           type: "function",
-        },
-        {
-          stateMutability: "payable",
-          type: "receive",
         },
       ],
       inheritedFunctions: {},
