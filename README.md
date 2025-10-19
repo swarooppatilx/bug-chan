@@ -1,80 +1,97 @@
-# 🏗 Scaffold-ETH 2
+# BugChan
+BugChan is a decentralized bug-bounty platform built at [ETHOnline 2025](https://ethglobal.com/events/ethonline2025/). It makes vulnerability disclosure transparent, trustless, and censorship-resistant by combining on‑chain escrow, encrypted off‑chain reports, and blockchain-native attestations.
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+---
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+## Overview
 
-⚙️ Built using NextJS, RainbowKit, Hardhat, Wagmi, Viem, and Typescript.
+- Projects post bounties on-chain and lock rewards in escrow.  
+- Researchers submit encrypted vulnerability reports to IPFS (via Lighthouse).  
+- Approved reports trigger automated payouts from escrow.
 
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
+---
 
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
+## Tech stack
 
-## Requirements
+- Frontend: Next.js (App Router) + Tailwind CSS  
+- Smart contracts: Solidity, Hardhat  
+- Wallets: Wagmi + RainbowKit  
+- Storage: Lighthouse
+- Payments: Stablecoin escrow
 
-Before you begin, you need to install the following tools:
+---
 
-- [Node (>= v20.18.3)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
+## Core features
 
-## Quickstart
+- On‑chain escrow: secure, auditable funds lockup.  
+- Encrypted submissions: private uploads via Lighthouse.  
+- Automatic payouts: smart contracts release rewards on approval.  
+- Transparent history: all bounties & payouts visible on-chain.  
+- Tokenomics & anti‑spam: stake requirement for submissions; forfeited stake funds the system & deters spam.  
+- Reputation: attestations provide on‑chain trust signals.
 
-To get started with Scaffold-ETH 2, follow the steps below:
+---
 
-1. Install dependencies if it was skipped in CLI:
+## Architecture overview
 
-```
-cd my-dapp-example
+1. User posts bounty via frontend → smart contract creates escrow.  
+2. Researcher encrypts report and uploads to Lighthouse/IPFS. CID and encryption metadata are stored off‑chain; reference is added on‑chain as needed.  
+3. Project reviews submission; on approval, the contract releases funds to researcher.  
+
+---
+
+## Getting started
+
+Prerequisites: Node.js (16+), Yarn, Hardhat-compatible environment, a wallet (MetaMask / Rainbow).
+
+Clone and install:
+
+```bash
+git clone https://github.com/swarooppatilx/bug-chan.git
+cd bug-chan
 yarn install
 ```
 
-2. Run a local network in the first terminal:
 
-```
+Local development (quick start):
+
+```bash
+# Start local Hardhat node
 yarn chain
-```
 
-This command starts a local Ethereum network using Hardhat. The network runs on your local machine and can be used for testing and development. You can customize the network configuration in `packages/hardhat/hardhat.config.ts`.
-
-3. On a second terminal, deploy the test contract:
-
-```
+# Deploy contracts to local network
 yarn deploy
-```
 
-This command deploys a test smart contract to the local network. The contract is located in `packages/hardhat/contracts` and can be modified to suit your needs. The `yarn deploy` command uses the deploy script located in `packages/hardhat/deploy` to deploy the contract to the network. You can also customize the deploy script.
-
-4. On a third terminal, start your NextJS app:
-
-```
+# Run frontend
 yarn start
+# Open http://localhost:3000
 ```
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+---
 
-Run smart contract test with `yarn hardhat:test`
+## Development
 
-- Edit your smart contracts in `packages/hardhat/contracts`
-- Edit your frontend homepage at `packages/nextjs/app/page.tsx`. For guidance on [routing](https://nextjs.org/docs/app/building-your-application/routing/defining-routes) and configuring [pages/layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) checkout the Next.js documentation.
-- Edit your deployment scripts in `packages/hardhat/deploy`
+- Run tests:
 
+```bash
+yarn test       # runs Solidity and JS tests
+```
 
-## Documentation
+- Lint & format:
 
-Visit our [docs](https://docs.scaffoldeth.io) to learn how to start building with Scaffold-ETH 2.
+```bash
+yarn lint
+yarn format
+```
 
-To know more about its features, check out our [website](https://scaffoldeth.io).
+- Common Hardhat tasks:
 
-## Contributing to Scaffold-ETH 2
+```bash
+yarn hardhat compile
+yarn hardhat test
+```
 
-We welcome contributions to Scaffold-ETH 2!
-
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
+Notes:
+- Prototype: under active development.
+- Built using [Scaffold-ETH](https://scaffoldeth.io/) (Scaffold-ETH2)
+- License: [MIT](https://opensource.org/licenses/MIT)
