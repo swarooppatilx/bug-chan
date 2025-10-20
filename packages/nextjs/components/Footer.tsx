@@ -1,79 +1,42 @@
 import React from "react";
-import Link from "next/link";
-import { hardhat } from "viem/chains";
-import { CurrencyDollarIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { HeartIcon } from "@heroicons/react/24/outline";
-import { SwitchTheme } from "~~/components/SwitchTheme";
-import { BuidlGuidlLogo } from "~~/components/assets/BuidlGuidlLogo";
-import { Faucet } from "~~/components/scaffold-eth";
-import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
-import { useGlobalState } from "~~/services/store/store";
+import Image from "next/image";
+import { CodeBracketIcon } from "@heroicons/react/24/outline";
 
 /**
  * Site footer
  */
 export const Footer = () => {
-  const nativeCurrencyPrice = useGlobalState(state => state.nativeCurrency.price);
-  const { targetNetwork } = useTargetNetwork();
-  const isLocalNetwork = targetNetwork.id === hardhat.id;
-
   return (
-    <div className="min-h-0 py-5 px-1 mb-11 lg:mb-0">
-      <div>
-        <div className="fixed flex justify-between items-center w-full z-10 p-4 bottom-0 left-0 pointer-events-none">
-          <div className="flex flex-col md:flex-row gap-2 pointer-events-auto">
-            {nativeCurrencyPrice > 0 && (
-              <div>
-                <div className="btn btn-primary btn-sm font-normal gap-1 cursor-auto">
-                  <CurrencyDollarIcon className="h-4 w-4" />
-                  <span>{nativeCurrencyPrice.toFixed(2)}</span>
-                </div>
-              </div>
-            )}
-            {isLocalNetwork && (
-              <>
-                <Faucet />
-                <Link href="/blockexplorer" passHref className="btn btn-primary btn-sm font-normal gap-1">
-                  <MagnifyingGlassIcon className="h-4 w-4" />
-                  <span>Block Explorer</span>
-                </Link>
-              </>
-            )}
-          </div>
-          <SwitchTheme className={`pointer-events-auto ${isLocalNetwork ? "self-end md:self-auto" : ""}`} />
-        </div>
-      </div>
-      <div className="w-full">
-        <ul className="menu menu-horizontal w-full">
-          <div className="flex justify-center items-center gap-2 text-sm w-full">
-            <div className="text-center">
-              <a href="https://github.com/scaffold-eth/se-2" target="_blank" rel="noreferrer" className="link">
-                Fork me
-              </a>
+    <div className="w-full border-t border-gray-800 bg-black py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          {/* Left - Logo and Description */}
+          <div className="flex flex-col items-center md:items-start gap-3">
+            <div className="relative w-28 h-7">
+              <Image alt="BugChan logo" fill src="/logo.svg" style={{ objectFit: "contain" }} />
             </div>
-            <span>·</span>
-            <div className="flex justify-center items-center gap-2">
-              <p className="m-0 text-center">
-                Built with <HeartIcon className="inline-block h-4 w-4" /> at
-              </p>
+            <p className="text-sm font-roboto font-light text-gray-400 text-center md:text-left max-w-sm">
+              Decentralized bug bounty platform securing web3, one vulnerability at a time.
+            </p>
+          </div>
+
+          {/* Right - Links and Hackathon Info */}
+          <div className="flex flex-col items-center md:items-end gap-3">
+            <div className="flex items-start justify-end  text-sm font-roboto text-gray-400">
               <a
-                className="flex justify-center items-center gap-1"
-                href="https://buidlguidl.com/"
+                href="https://github.com/yourusername/bugchan"
                 target="_blank"
                 rel="noreferrer"
+                className="flex items-center gap-2 hover:text-[var(--color-secondary)] transition-colors duration-300"
               >
-                <BuidlGuidlLogo className="w-3 h-5 pb-1" />
-                <span className="link">BuidlGuidl</span>
+                <CodeBracketIcon className="h-4 w-4" />
+                <span>GitHub</span>
               </a>
+              <span className="text-gray-600">·</span>
             </div>
-            <span>·</span>
-            <div className="text-center">
-              <a href="https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA" target="_blank" rel="noreferrer" className="link">
-                Support
-              </a>
-            </div>
+            <p className="text-xs font-roboto text-gray-500">Built for ETHOnline 2025</p>
           </div>
-        </ul>
+        </div>
       </div>
     </div>
   );

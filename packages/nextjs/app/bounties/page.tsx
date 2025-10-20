@@ -5,7 +5,7 @@ import Link from "next/link";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import { useReadContracts } from "wagmi";
-import { BugAntIcon } from "@heroicons/react/24/outline";
+import { BugAntIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
@@ -61,34 +61,38 @@ const BountyCard = ({ id, owner, amount, status, cid }: BountyCardProps) => {
 
   return (
     <div
-      className={`card bg-base-100 shadow-md hover:shadow-xl transition-shadow ${isMetadataLoading ? "animate-pulse" : ""}`}
+      className={`bg-gray-900 border border-gray-800 hover:border-[var(--color-secondary)]/50 p-6 transition-all duration-300 hover:scale-105 ${isMetadataLoading ? "animate-pulse" : ""}`}
     >
-      <div className="card-body">
-        <div className="flex justify-between items-start mb-4">
-          <div className={`badge ${getSeverityColor(metadata.severity)}`}>{metadata.severity}</div>
-          <div className={`badge ${getStatusColor(BountyStatus[status])}`}>{BountyStatus[status]}</div>
+      <div className="flex justify-between items-start mb-4">
+        <div className={`px-3 py-1 text-xs font-roboto font-medium ${getSeverityColor(metadata.severity)}`}>
+          {metadata.severity}
         </div>
-        <h2 className="card-title truncate">{metadata.title}</h2>
-        <p className="mb-4 line-clamp-2 h-12 text-base-content/70">{metadata.description}</p>
-        <div className="flex justify-between items-center text-sm">
-          <div>
-            <p className="text-base-content/60">Reward</p>
-            <p className="font-medium text-lg">{formatEther(amount)} ETH</p>
-          </div>
-          <div className="text-right">
-            <p className="text-base-content/60">Posted by</p>
-            <Address address={owner} format="short" />
-          </div>
-        </div>
-        <div className="card-actions mt-4">
-          <Link href={`/bounties/${id}`} className="btn btn-secondary btn-sm w-full">
-            View Details
-          </Link>
+        <div className={`px-3 py-1 text-xs font-roboto font-medium ${getStatusColor(BountyStatus[status])}`}>
+          {BountyStatus[status]}
         </div>
       </div>
+      <h2 className="text-xl font-akira mb-3 text-white truncate">{metadata.title}</h2>
+      <p className="mb-4 line-clamp-2 h-12 text-gray-400 font-roboto text-sm">{metadata.description}</p>
+      <div className="flex justify-between items-center text-sm mb-4 pt-4 border-t border-gray-800">
+        <div>
+          <p className="text-gray-500 font-roboto text-xs mb-1">Reward</p>
+          <p className="font-roboto font-medium text-lg text-[var(--color-secondary)]">{formatEther(amount)} ETH</p>
+        </div>
+        <div className="text-right">
+          <p className="text-gray-500 font-roboto text-xs mb-1">Posted by</p>
+          <Address address={owner} format="short" />
+        </div>
+      </div>
+      <Link
+        href={`/bounties/${id}`}
+        className="block w-full text-center px-4 py-2 bg-[var(--color-primary)] hover:opacity-90 text-white font-roboto text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+      >
+        View Details
+      </Link>
     </div>
   );
 };
+
 export default function BountiesPage() {
   const { address: connectedAddress } = useAccount();
 
@@ -136,33 +140,38 @@ export default function BountiesPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <BugAntIcon className="h-8 w-8" />
+        <h1 className="text-3xl font-akira flex items-center gap-3 text-white">
+          <BugAntIcon className="h-8 w-8 text-[var(--color-secondary)]" />
           Open Bounties
         </h1>
-        <Link href="/bounties/create" className="btn btn-primary">
+        <Link
+          href="/bounties/create"
+          className="px-6 py-3 bg-[var(--color-secondary)] hover:opacity-90 text-black font-roboto font-medium transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2"
+        >
+          <PlusIcon className="h-5 w-5" />
           Create Bounty
         </Link>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8">
-          <span className="loading loading-spinner loading-lg"></span>
-          <p className="mt-4">Loading bounties from the blockchain...</p>
+        <div className="text-center py-16">
+          <div className="h-12 w-12 border-4 border-[var(--color-secondary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400 font-roboto">Loading bounties from the blockchain...</p>
         </div>
       ) : bounties.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="mb-4 text-lg">No bounties found.</p>
+        <div className="text-center py-16 bg-gray-900 border border-gray-800 p-12">
+          <BugAntIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+          <p className="mb-4 text-lg font-roboto text-gray-300">No bounties found.</p>
           {connectedAddress ? (
-            <p>
+            <p className="font-roboto text-gray-400">
               Be the first to{" "}
-              <Link href="/bounties/create" className="link link-primary">
+              <Link href="/bounties/create" className="text-[var(--color-secondary)] hover:underline">
                 create a bounty
               </Link>
               !
             </p>
           ) : (
-            <p>Please connect your wallet to view or create bounties.</p>
+            <p className="font-roboto text-gray-400">Please connect your wallet to view or create bounties.</p>
           )}
         </div>
       ) : (
@@ -186,31 +195,31 @@ export default function BountiesPage() {
 const getSeverityColor = (severity: string) => {
   switch (severity) {
     case "Low":
-      return "badge-success";
+      return "bg-green-900/30 text-green-400 border border-green-700";
     case "Medium":
-      return "badge-warning";
+      return "bg-yellow-900/30 text-yellow-400 border border-yellow-700";
     case "High":
-      return "badge-error";
+      return "bg-orange-900/30 text-orange-400 border border-orange-700";
     case "Critical":
-      return "badge-error";
+      return "bg-red-900/30 text-red-400 border border-red-700";
     default:
-      return "badge-ghost";
+      return "bg-gray-800 text-gray-400 border border-gray-700";
   }
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case "Open":
-      return "badge-info";
+      return "bg-blue-900/30 text-blue-400 border border-blue-700";
     case "Submitted":
-      return "badge-accent";
+      return "bg-purple-900/30 text-purple-400 border border-purple-700";
     case "Approved":
-      return "badge-success";
+      return "bg-green-900/30 text-green-400 border border-green-700";
     case "Rejected":
-      return "badge-error";
+      return "bg-red-900/30 text-red-400 border border-red-700";
     case "Disputed":
-      return "badge-warning";
+      return "bg-yellow-900/30 text-yellow-400 border border-yellow-700";
     default:
-      return "badge-ghost";
+      return "bg-gray-800 text-gray-400 border border-gray-700";
   }
 };

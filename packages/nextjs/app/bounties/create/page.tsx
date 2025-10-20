@@ -10,7 +10,6 @@ import {
   CurrencyDollarIcon,
   DocumentTextIcon,
   PencilSquareIcon,
-  RocketLaunchIcon,
   ShieldExclamationIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
@@ -35,17 +34,13 @@ type FormFieldProps = {
 
 const FormField = ({ label, icon, helperText, children }: FormFieldProps) => (
   <div>
-    <label className="label">
-      <span className="label-text flex items-center gap-2 text-base">
+    <label className="block mb-2">
+      <span className="flex items-center gap-2 text-base font-roboto text-white">
         {icon} {label}
       </span>
     </label>
     {children}
-    {helperText && (
-      <label className="label">
-        <span className="label-text-alt">{helperText}</span>
-      </label>
-    )}
+    {helperText && <p className="mt-1 text-xs text-gray-400 font-roboto">{helperText}</p>}
   </div>
 );
 
@@ -107,39 +102,38 @@ export default function CreateBountyPage() {
 
   return (
     <div className="container mx-auto px-4 py-10">
-      <div className="card max-w-3xl mx-auto bg-base-100 shadow-xl">
-        <div className="card-body">
-          <div className="flex items-center gap-2 mb-4">
-            <PencilSquareIcon className="h-8 w-8" />
-            <h1 className="card-title text-3xl">Create a New Bounty</h1>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <FormField label="Title" icon={<DocumentTextIcon className="h-5 w-5" />}>
-              <input
-                type="text"
-                value={form.title}
-                onChange={e => setForm({ ...form, title: e.target.value })}
-                className="input input-bordered w-full rounded-md"
-                placeholder="e.g., Smart Contract Reentrancy Bug"
-                required
-              />
-            </FormField>
+      <div className="max-w-3xl mx-auto bg-gray-900 border border-gray-800 p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <PencilSquareIcon className="h-8 w-8 text-[var(--color-secondary)]" />
+          <h1 className="text-3xl font-akira text-white">Create a New Bounty</h1>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <FormField label="Title" icon={<DocumentTextIcon className="h-5 w-5" />}>
+            <input
+              type="text"
+              value={form.title}
+              onChange={e => setForm({ ...form, title: e.target.value })}
+              className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
+              placeholder="e.g., Smart Contract Reentrancy Bug"
+              required
+            />
+          </FormField>
 
-            <FormField label="Description" icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />}>
-              <textarea
-                value={form.description}
-                onChange={e => setForm({ ...form, description: e.target.value })}
-                className="textarea textarea-bordered w-full text-base rounded-md"
-                rows={6}
-                placeholder="Describe the scope, vulnerability impact, and requirements for this bounty..."
-                required
-              />
-            </FormField>
+          <FormField label="Description" icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />}>
+            <textarea
+              value={form.description}
+              onChange={e => setForm({ ...form, description: e.target.value })}
+              className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors min-h-32"
+              rows={6}
+              placeholder="Describe the scope, vulnerability impact, and requirements for this bounty..."
+              required
+            />
+          </FormField>
 
-            <div className="divider">Bounty Parameters</div>
+          <div className="pt-4 border-t border-gray-800">
+            <h3 className="text-lg font-roboto font-medium text-white mb-4">Bounty Parameters</h3>
 
-            {/* Grid for amount and severity */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField label="Bounty Amount (ETH)" icon={<CurrencyDollarIcon className="h-5 w-5" />}>
                 <EtherInput
                   value={form.amount}
@@ -156,7 +150,7 @@ export default function CreateBountyPage() {
                 <select
                   value={form.severity}
                   onChange={e => setForm({ ...form, severity: e.target.value as BountyForm["severity"] })}
-                  className="select select-bordered w-full rounded-md"
+                  className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
                 >
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
@@ -165,33 +159,34 @@ export default function CreateBountyPage() {
                 </select>
               </FormField>
             </div>
+          </div>
 
-            <FormField
-              label="Project Address (Bounty Owner)"
-              icon={<UserCircleIcon className="h-5 w-5" />}
-              helperText="This address will own the bounty and has the authority to approve or reject submissions."
+          <FormField
+            label="Project Address (Bounty Owner)"
+            icon={<UserCircleIcon className="h-5 w-5" />}
+            helperText="This address will own the bounty and has the authority to approve or reject submissions."
+          >
+            <AddressInput
+              value={form.projectAddress}
+              onChange={value => setForm({ ...form, projectAddress: value })}
+              placeholder="The address that will manage the bounty"
+            />
+          </FormField>
+
+          <div className="pt-6">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full px-8 py-4 bg-[var(--color-secondary)] hover:opacity-90 text-black font-roboto font-medium text-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <AddressInput
-                value={form.projectAddress}
-                onChange={value => setForm({ ...form, projectAddress: value })}
-                placeholder="The address that will manage the bounty"
-              />
-            </FormField>
-
-            <div className="card-actions justify-end mt-6">
-              <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-lg w-full rounded-md">
-                {isSubmitting ? (
-                  <span className="loading loading-spinner"></span>
-                ) : (
-                  <>
-                    <RocketLaunchIcon className="h-5 w-5" />
-                    Create Bounty
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+              {isSubmitting ? (
+                <div className="h-5 w-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>Create Bounty</>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

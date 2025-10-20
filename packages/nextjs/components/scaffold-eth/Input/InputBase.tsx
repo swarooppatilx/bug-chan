@@ -23,9 +23,9 @@ export const InputBase = <T extends { toString: () => string } | undefined = str
 
   let modifier = "";
   if (error) {
-    modifier = "border-error";
+    modifier = "border-red-500";
   } else if (disabled) {
-    modifier = "border-disabled bg-base-300";
+    modifier = "border-gray-700 bg-gray-800 opacity-50";
   }
 
   const handleChange = useCallback(
@@ -47,10 +47,12 @@ export const InputBase = <T extends { toString: () => string } | undefined = str
   }, [reFocus]);
 
   return (
-    <div className={`flex border-2 border-base-300 bg-base-200 rounded-full text-accent ${modifier}`}>
+    <div
+      className={`flex border border-gray-800 bg-black text-white transition-colors duration-300 focus-within:border-[var(--color-secondary)]/50 ${modifier}`}
+    >
       {prefix}
       <input
-        className="input input-ghost focus-within:border-transparent focus:outline-hidden focus:bg-transparent h-[2.2rem] min-h-[2.2rem] px-4 border w-full font-medium placeholder:text-accent/70 text-base-content/70 focus:text-base-content/70"
+        className="flex-1 px-4 py-3 bg-transparent focus:outline-none font-roboto text-white placeholder:text-gray-500 disabled:cursor-not-allowed"
         placeholder={placeholder}
         name={name}
         value={value?.toString()}

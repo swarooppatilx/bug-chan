@@ -53,19 +53,21 @@ export const FaucetButton = () => {
   const isBalanceZero = balance && balance.value === 0n;
 
   return (
-    <div
-      className={
-        !isBalanceZero
-          ? "ml-1"
-          : "ml-1 tooltip tooltip-bottom tooltip-primary tooltip-open font-bold before:left-auto before:transform-none before:content-[attr(data-tip)] before:-translate-x-2/5"
-      }
-      data-tip="Grab funds from faucet"
-    >
-      <button className="btn btn-secondary btn-sm px-2 rounded-full" onClick={sendETH} disabled={loading}>
+    <div className="ml-1 relative group">
+      {isBalanceZero && (
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-[var(--color-primary)] text-white text-xs font-roboto whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:-translate-y-1">
+          Grab funds from faucet
+        </div>
+      )}
+      <button
+        className="px-3 py-2 bg-[var(--color-primary)] hover:opacity-90 text-white font-roboto text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-[var(--color-primary)]/30"
+        onClick={sendETH}
+        disabled={loading}
+      >
         {!loading ? (
-          <BanknotesIcon className="h-4 w-4" />
+          <BanknotesIcon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
         ) : (
-          <span className="loading loading-spinner loading-xs"></span>
+          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
         )}
       </button>
     </div>
