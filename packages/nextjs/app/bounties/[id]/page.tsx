@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import lighthouse from "@lighthouse-web3/sdk";
 import { formatEther, parseEther } from "viem";
-import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useAccount, useReadContracts, useSignMessage, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { BugAntIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
@@ -24,6 +24,7 @@ export default function BountyDetailsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const { data: hash, error, isPending, writeContractAsync } = useWriteContract();
+  const { signMessageAsync } = useSignMessage();
 
   const { data: bountyData, refetch: refetchBountyData } = useReadContracts({
     contracts: [
@@ -105,12 +106,50 @@ export default function BountyDetailsPage() {
         bountyAddress,
         submittedAt: new Date().toISOString(),
       };
-      const file = new File([JSON.stringify(payload, null, 2)], "bug-report.json", { type: "application/json" });
       if (!apiKey) throw new Error("Lighthouse API key not set. Please set NEXT_PUBLIC_LIGHTHOUSE_API_KEY.");
-      notification.info("Uploading report to IPFS...");
-      const response = await lighthouse.upload([file], apiKey);
-      const reportCid: string = response.data.Hash;
-      notification.success("Report uploaded!");
+      if (!connectedAddress) throw new Error("Connect your wallet to submit a report.");
+      // Authenticate with Lighthouse (sign message)
+      const { data: auth } = await lighthouse.getAuthMessage(connectedAddress);
+      if (!auth?.message) throw new Error("Failed to get auth message from Lighthouse");
+      const signedMessage = await signMessageAsync({ message: String(auth.message) });
+      notification.info("Uploading encrypted report to IPFS...");
+      // Prepare a FileList since the browser SDK expects a FileList for uploadEncrypted
+      const jsonText = JSON.stringify(payload, null, 2);
+      const reportFile = new File([jsonText], "bug-report.json", { type: "application/json" });
+      const dt = new DataTransfer();
+      dt.items.add(reportFile);
+      const fileList = dt.files; // FileList
+
+      const progressCallback = (data: { total: number; uploaded: number }) => {
+        const pct = ((data.uploaded / data.total) * 100).toFixed(0);
+        console.debug(`Lighthouse upload progress: ${pct}%`);
+      };
+      const encResponse = await (lighthouse as any).uploadEncrypted(
+        fileList,
+        apiKey,
+        connectedAddress,
+        signedMessage,
+        progressCallback,
+      );
+      // Response commonly: { data: [ { Hash, Name, Size } ] }
+      const data = encResponse?.data as unknown;
+      const reportCid: string | undefined = Array.isArray(data)
+        ? (data as Array<{ Hash?: string }>)[0]?.Hash
+        : (data as { Hash?: string } | undefined)?.Hash;
+      console.debug("lighthouse.uploadEncrypted response", encResponse);
+      if (!reportCid) throw new Error("Failed to retrieve CID from Lighthouse upload response");
+      notification.success("Encrypted report uploaded!");
+      // Share encrypted file with bounty owner so they can decrypt
+      const ownerAddr = owner?.result as string | undefined;
+      if (ownerAddr && ownerAddr !== connectedAddress) {
+        try {
+          await (lighthouse as any).shareFile(connectedAddress as string, signedMessage as string, reportCid, [
+            ownerAddr as string,
+          ]);
+        } catch (shareErr) {
+          console.warn("Failed to share file with owner", shareErr);
+        }
+      }
       const valueWei = parseEther(stakeEth as `${string}`);
       if (minStake?.result && valueWei < (minStake.result as bigint)) {
         return notification.error(`Stake must be at least ${minStakeEth} ETH`);
@@ -222,18 +261,21 @@ export default function BountyDetailsPage() {
             </div>
             {currentStatus === "Open" && (
               <div className="mt-8 pt-6 border-t border-base-300">
-                <h2 className="card-title mb-4">Submit Vulnerability Report</h2>
+                <h2 className="card-title mb-1">Submit Vulnerability Report</h2>
+                <p className="text-sm text-base-content/60 mb-4">
+                  Provide enough detail to reproduce the issue. Your stake discourages spam and is refunded on approval.
+                </p>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     <input
                       type="text"
                       placeholder="Title"
-                      className="input input-bordered w-full"
+                      className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-secondary/30"
                       value={title}
                       onChange={e => setTitle(e.target.value)}
                     />
                     <select
-                      className="select select-bordered w-full"
+                      className="select select-bordered w-full focus:outline-none focus:ring-2 focus:ring-secondary/30"
                       value={severity}
                       onChange={e => setSeverity(e.target.value)}
                     >
@@ -242,16 +284,23 @@ export default function BountyDetailsPage() {
                       <option>High</option>
                       <option>Critical</option>
                     </select>
-                    <textarea
-                      className="textarea textarea-bordered w-full min-h-32"
-                      placeholder="Describe the vulnerability, reproduction steps, and potential impact..."
-                      value={description}
-                      onChange={e => setDescription(e.target.value)}
-                    />
+                    <div>
+                      <textarea
+                        className="textarea textarea-bordered w-full min-h-40 rounded-md"
+                        placeholder="Describe the vulnerability, reproduction steps, expected vs actual behavior, impacted components, and potential impact..."
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        maxLength={5000}
+                      />
+                      <div className="mt-1 flex justify-between text-xs text-base-content/60">
+                        <span>Tip: Include minimal PoC or steps to reproduce.</span>
+                        <span>{description.length}/5000</span>
+                      </div>
+                    </div>
                     <input
                       type="text"
                       placeholder="Contact (email, Telegram, ENS, etc.)"
-                      className="input input-bordered w-full"
+                      className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-secondary/30"
                       value={contact}
                       onChange={e => setContact(e.target.value)}
                     />
@@ -264,7 +313,7 @@ export default function BountyDetailsPage() {
                         type="number"
                         min={minStakeEth}
                         step="0.001"
-                        className="input input-bordered w-full"
+                        className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-secondary/30"
                         value={stakeEth}
                         onChange={e => setStakeEth(e.target.value)}
                       />
