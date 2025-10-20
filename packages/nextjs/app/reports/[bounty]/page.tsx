@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import lighthouse from "@lighthouse-web3/sdk";
 import { formatEther } from "viem";
-import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useAccount, useReadContracts, useSignMessage, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { EyeIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
@@ -13,6 +14,7 @@ export default function ReportDetailsPage() {
   const { bounty } = useParams();
   const bountyAddress = bounty as `0x${string}`;
   const { address: connectedAddress } = useAccount();
+  const { signMessageAsync } = useSignMessage();
 
   const { data: hash, error, isPending, writeContractAsync } = useWriteContract();
 
@@ -52,24 +54,35 @@ export default function ReportDetailsPage() {
     writeContractAsync({ address: bountyAddress, abi: bountyABI, functionName: "rejectSubmission" });
 
   const [reportJson, setReportJson] = useState<any | null>(null);
+  const [decrypting, setDecrypting] = useState(false);
   useEffect(() => {
-    const fetchReport = async () => {
-      if (!reportCidStr) return;
-      try {
-        const url = `https://gateway.lighthouse.storage/ipfs/${reportCidStr}`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          setReportJson(data);
-        } else {
-          setReportJson(null);
-        }
-      } catch {
-        setReportJson(null);
-      }
-    };
-    fetchReport();
+    setReportJson(null);
   }, [reportCidStr]);
+
+  const handleDecrypt = async () => {
+    if (!reportCidStr) return;
+    if (!connectedAddress) return notification.error("Connect your wallet to decrypt.");
+    try {
+      setDecrypting(true);
+      const { data: auth } = await lighthouse.getAuthMessage(connectedAddress);
+      if (typeof auth?.message !== "string") throw new Error("Failed to get auth message");
+      const signedMessage = await signMessageAsync({ message: auth.message });
+      const keyObject = await lighthouse.fetchEncryptionKey(reportCidStr, connectedAddress, signedMessage);
+      const key = keyObject?.data?.key;
+      if (typeof key !== "string") throw new Error("Failed to fetch encryption key");
+      const fileType = "application/json";
+      const decrypted = await lighthouse.decryptFile(reportCidStr, key, fileType);
+      const text = await decrypted.text();
+      const json = JSON.parse(text);
+      setReportJson(json);
+      notification.success("Report decrypted");
+    } catch (e: any) {
+      console.error("decrypt error", e);
+      notification.error(e?.message || "Failed to decrypt report");
+    } finally {
+      setDecrypting(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -114,7 +127,14 @@ export default function ReportDetailsPage() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-base-300">
-            <h2 className="card-title mb-2">Report Content</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="card-title mb-2">Report Content</h2>
+              {isOwner && !reportJson && (
+                <button className="btn btn-sm" onClick={handleDecrypt} disabled={decrypting}>
+                  {decrypting ? <span className="loading loading-spinner" /> : "Decrypt"}
+                </button>
+              )}
+            </div>
             {reportJson ? (
               <div className="space-y-2">
                 {reportJson.title && (
@@ -145,7 +165,7 @@ export default function ReportDetailsPage() {
                 )}
               </div>
             ) : (
-              <div className="text-base-content/60">No report JSON found (may not be a JSON submission)</div>
+              <div className="text-base-content/60">Encrypted report. Only the bounty owner can decrypt.</div>
             )}
           </div>
 
