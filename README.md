@@ -1,7 +1,9 @@
 # BugChan
-BugChan is a decentralized bug-bounty platform built at [ETHOnline 2025](https://ethglobal.com/events/ethonline2025/). It makes vulnerability disclosure transparent, trustless, and censorship-resistant by combining on‑chain escrow, encrypted off‑chain reports, and blockchain-native attestations.
+[BugChan](https://bugchan.xyz) is a decentralized bug-bounty platform built at [ETHOnline 2025](https://ethglobal.com/events/ethonline2025/). It makes vulnerability disclosure transparent, trustless, and censorship-resistant by combining on‑chain escrow, encrypted off‑chain reports, and blockchain-native attestations.
 
 ---
+
+[![screenshot](screenshot.png)](https://bugchan.xyz)
 
 ## Overview
 
@@ -17,7 +19,7 @@ BugChan is a decentralized bug-bounty platform built at [ETHOnline 2025](https:/
 - Smart contracts: Solidity, Hardhat  
 - Wallets: Wagmi + RainbowKit  
 - Storage: Lighthouse
-- Payments: Stablecoin escrow
+- Payments: onchain
 
 ---
 
@@ -39,57 +41,6 @@ BugChan is a decentralized bug-bounty platform built at [ETHOnline 2025](https:/
 3. Project reviews submission; on approval, the contract releases funds to researcher.  
 
 ---
-
-## Getting started
-
-Prerequisites: Node.js (16+), Yarn, Hardhat-compatible environment, a wallet (MetaMask / Rainbow).
-
-Clone and install:
-
-```bash
-git clone https://github.com/swarooppatilx/bug-chan.git
-cd bug-chan
-yarn install
-```
-
-
-Local development (quick start):
-
-```bash
-# Start local Hardhat node
-yarn chain
-
-# Deploy contracts to local network
-yarn deploy
-
-# Run frontend
-yarn start
-# Open http://localhost:3000
-```
-
----
-
-## Development
-
-- Run tests:
-
-```bash
-yarn test       # runs Solidity and JS tests
-```
-
-- Lint & format:
-
-```bash
-yarn lint
-yarn format
-```
-
-- Common Hardhat tasks:
-
-```bash
-yarn hardhat compile
-yarn hardhat test
-```
 
 Notes:
 - Prototype: under active development.
