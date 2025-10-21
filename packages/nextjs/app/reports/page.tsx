@@ -72,20 +72,28 @@ export default function ReportsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <BugAntIcon className="h-6 w-6" />
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-akira flex items-center gap-3 text-white">
+          <BugAntIcon className="h-8 w-8 text-[var(--color-secondary)]" />
           Reports
         </h1>
-        <div className="join">
+        <div className="flex gap-2">
           <button
-            className={`btn btn-sm join-item ${activeTab === "Submitted" ? "btn-primary" : ""}`}
+            className={`px-4 py-2 font-roboto text-sm font-medium transition-all duration-300 ${
+              activeTab === "Submitted"
+                ? "bg-[var(--color-primary)] text-white"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            }`}
             onClick={() => setActiveTab("Submitted")}
           >
             Submitted
           </button>
           <button
-            className={`btn btn-sm join-item ${activeTab === "All" ? "btn-primary" : ""}`}
+            className={`px-4 py-2 font-roboto text-sm font-medium transition-all duration-300 ${
+              activeTab === "All"
+                ? "bg-[var(--color-primary)] text-white"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            }`}
             onClick={() => setActiveTab("All")}
           >
             All
@@ -95,55 +103,59 @@ export default function ReportsPage() {
 
       {isLoading ? (
         <div className="text-center py-16">
-          <span className="loading loading-spinner loading-lg" />
-          <p className="mt-4">Loading reports...</p>
+          <div className="h-12 w-12 border-4 border-[var(--color-secondary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400 font-roboto">Loading reports...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-base-content/60">
-          <InboxIcon className="h-10 w-10 mb-2" />
-          <p>No reports found for your bounties.</p>
+        <div className="flex flex-col items-center justify-center py-16 bg-gray-900 border border-gray-800 p-12">
+          <InboxIcon className="h-16 w-16 text-gray-600 mb-4" />
+          <p className="text-gray-400 font-roboto">No reports found for your bounties.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map(r => (
-            <div key={r.bounty} className="card bg-base-100 shadow-md">
-              <div className="card-body">
-                <div className="flex justify-between items-start">
-                  <div
-                    className={`badge ${
-                      r.status === 1
-                        ? "badge-accent"
-                        : r.status === 2
-                          ? "badge-success"
-                          : r.status === 3
-                            ? "badge-error"
-                            : "badge-ghost"
-                    }`}
-                  >
-                    {BountyStatus[r.status]}
-                  </div>
-                  <span className="badge badge-outline">{formatEther(r.amount)} ETH</span>
+            <div
+              key={r.bounty}
+              className="bg-gray-900 border border-gray-800 hover:border-[var(--color-secondary)]/50 p-6 transition-all duration-300 hover:scale-105"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div
+                  className={`px-3 py-1 text-xs font-roboto font-medium ${
+                    r.status === 1
+                      ? "bg-purple-900/30 text-purple-400 border border-purple-700"
+                      : r.status === 2
+                        ? "bg-green-900/30 text-green-400 border border-green-700"
+                        : r.status === 3
+                          ? "bg-red-900/30 text-red-400 border border-red-700"
+                          : "bg-gray-800 text-gray-400 border border-gray-700"
+                  }`}
+                >
+                  {BountyStatus[r.status]}
                 </div>
-                <div className="mt-2 space-y-2 text-sm">
-                  <div>
-                    <span className="text-base-content/60 mr-1">Bounty</span>
-                    <Address address={r.bounty} format="short" />
-                  </div>
-                  <div>
-                    <span className="text-base-content/60 mr-1">Researcher</span>
-                    <Address address={r.researcher} format="short" />
-                  </div>
-                  <div className="truncate">
-                    <span className="text-base-content/60 mr-1">CID</span>
-                    <span className="font-mono text-xs">{r.reportCid}</span>
-                  </div>
+                <span className="px-3 py-1 bg-gray-800 border border-gray-700 text-[var(--color-secondary)] text-xs font-roboto font-medium">
+                  {formatEther(r.amount)} ETH
+                </span>
+              </div>
+              <div className="mt-2 space-y-3 text-sm">
+                <div>
+                  <span className="text-gray-500 font-roboto text-xs block mb-1">Bounty</span>
+                  <Address address={r.bounty} format="short" />
                 </div>
-                <div className="card-actions mt-4">
-                  <Link href={`/reports/${r.bounty}`} className="btn btn-secondary btn-sm w-full">
-                    View Report
-                  </Link>
+                <div>
+                  <span className="text-gray-500 font-roboto text-xs block mb-1">Researcher</span>
+                  <Address address={r.researcher} format="short" />
+                </div>
+                <div className="truncate">
+                  <span className="text-gray-500 font-roboto text-xs block mb-1">CID</span>
+                  <span className="font-mono text-xs text-gray-400">{r.reportCid}</span>
                 </div>
               </div>
+              <Link
+                href={`/reports/${r.bounty}`}
+                className="block w-full text-center px-4 py-2 mt-4 bg-[var(--color-secondary)] hover:opacity-90 text-black font-roboto text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+              >
+                View Report
+              </Link>
             </div>
           ))}
         </div>

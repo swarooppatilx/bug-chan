@@ -81,23 +81,23 @@ export const AddressInput = ({ value, name, placeholder, onChange, disabled }: C
       reFocus={reFocus}
       prefix={
         ensName ? (
-          <div className="flex bg-base-300 rounded-l-full items-center">
-            {isEnsAvatarLoading && <div className="skeleton bg-base-200 w-[35px] h-[35px] rounded-full shrink-0"></div>}
+          <div className="flex bg-gray-800 items-center border-r border-gray-700">
+            {isEnsAvatarLoading && <div className="w-[35px] h-[35px] bg-gray-700 animate-pulse shrink-0"></div>}
             {ensAvatar ? (
               <span className="w-[35px]">
                 {
                   // eslint-disable-next-line
-                  <img className="w-full rounded-full" src={ensAvatar} alt={`${ensAddress} avatar`} />
+                  <img className="w-full" src={ensAvatar} alt={`${ensAddress} avatar`} />
                 }
               </span>
             ) : null}
-            <span className="text-accent px-2">{enteredEnsName ?? ensName}</span>
+            <span className="text-[var(--color-secondary)] px-2 font-roboto text-sm">{enteredEnsName ?? ensName}</span>
           </div>
         ) : (
           (isEnsNameLoading || isEnsAddressLoading) && (
-            <div className="flex bg-base-300 rounded-l-full items-center gap-2 pr-2">
-              <div className="skeleton bg-base-200 w-[35px] h-[35px] rounded-full shrink-0"></div>
-              <div className="skeleton bg-base-200 h-3 w-20"></div>
+            <div className="flex bg-gray-800 items-center gap-2 pr-2 border-r border-gray-700">
+              <div className="w-[35px] h-[35px] bg-gray-700 animate-pulse shrink-0"></div>
+              <div className="h-3 w-20 bg-gray-700 animate-pulse"></div>
             </div>
           )
         )
@@ -105,7 +105,7 @@ export const AddressInput = ({ value, name, placeholder, onChange, disabled }: C
       suffix={
         // Don't want to use nextJS Image here (and adding remote patterns for the URL)
         // eslint-disable-next-line @next/next/no-img-element
-        value && <img alt="" className="rounded-full!" src={blo(value as `0x${string}`)} width="35" height="35" />
+        value && <img alt="" className="" src={blo(value as `0x${string}`)} width="35" height="35" />
       }
     />
   );

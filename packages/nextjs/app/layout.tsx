@@ -1,3 +1,5 @@
+import { Roboto } from "next/font/google";
+import localFont from "next/font/local";
 import "@rainbow-me/rainbowkit/styles.css";
 import { ScaffoldEthAppWithProviders } from "~~/components/ScaffoldEthAppWithProviders";
 import { ThemeProvider } from "~~/components/ThemeProvider";
@@ -9,9 +11,20 @@ export const metadata = getMetadata({
   description: "A Decentralized Bug Bounty Platform",
 });
 
+const akiraExpanded = localFont({
+  src: [{ path: "../public/fonts/AkiraExpanded.otf", weight: "800" }],
+  variable: "--font-akira",
+  display: "swap",
+});
+const roboto = Roboto({
+  subsets: ["latin"],
+  variable: "--font-roboto",
+  display: "swap",
+});
+
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html suppressHydrationWarning className={``}>
+    <html suppressHydrationWarning className={`${akiraExpanded.variable} ${roboto.variable} antialiased`}>
       <body>
         <ThemeProvider enableSystem>
           <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>

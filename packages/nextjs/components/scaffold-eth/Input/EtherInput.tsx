@@ -103,23 +103,25 @@ export const EtherInput = ({
       placeholder={placeholder}
       onChange={handleChangeNumber}
       disabled={disabled}
-      prefix={<span className="pl-4 -mr-2 text-accent self-center">{displayUsdMode ? "$" : "Ξ"}</span>}
+      prefix={
+        <span className="pl-4 -mr-2 text-[var(--color-secondary)] self-center font-roboto">
+          {displayUsdMode ? "$" : "Ξ"}
+        </span>
+      }
       suffix={
-        <div
-          className={`${
-            nativeCurrencyPrice > 0
-              ? ""
-              : "tooltip tooltip-secondary before:content-[attr(data-tip)] before:right-[-10px] before:left-auto before:transform-none"
-          }`}
-          data-tip={isNativeCurrencyPriceFetching ? "Fetching price" : "Unable to fetch price"}
-        >
+        <div className={`${nativeCurrencyPrice > 0 ? "" : "relative group"}`}>
+          {nativeCurrencyPrice <= 0 && (
+            <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-800 border border-gray-700 text-white text-xs font-roboto whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+              {isNativeCurrencyPriceFetching ? "Fetching price" : "Unable to fetch price"}
+            </div>
+          )}
           <button
-            className="btn btn-primary h-[2.2rem] min-h-[2.2rem]"
+            className="px-3 h-full bg-[var(--color-primary)] hover:opacity-90 text-white font-roboto transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={toggleDisplayUsdMode}
             disabled={!displayUsdMode && !nativeCurrencyPrice}
             type="button"
           >
-            <ArrowsRightLeftIcon className="h-3 w-3 cursor-pointer" aria-hidden="true" />
+            <ArrowsRightLeftIcon className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       }
