@@ -1,6 +1,7 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { network } from "hardhat";
 
+const { ethers } = await network.connect();
 describe("Bounty staking flow", function () {
   it("requires min stake and slashes on rejection", async function () {
     const [owner, researcher] = await ethers.getSigners();

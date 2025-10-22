@@ -8,7 +8,6 @@
 
 import * as fs from "fs";
 import prettier from "prettier";
-import { DeployFunction } from "hardhat-deploy/types";
 
 const generatedContractComment = `
 /**
@@ -18,7 +17,7 @@ const generatedContractComment = `
 `;
 
 const DEPLOYMENTS_DIR = "./deployments";
-const ARTIFACTS_DIR = "./artifacts";
+const ARTIFACTS_DIR = "./generated/artifacts";
 
 function getDirectories(path: string) {
   return fs
@@ -60,10 +59,11 @@ function getInheritedFunctions(sources: Record<string, any>, contractName: strin
   const inheritedFunctions = {} as Record<string, any>;
 
   for (const sourceContractName of actualSources) {
+    console.log(sourceContractName);
     const sourcePath = Object.keys(sources).find(key => key.includes(`/${sourceContractName}`));
     if (sourcePath) {
       const sourceName = sourcePath?.split("/").pop()?.split(".sol")[0];
-      const { abi } = JSON.parse(fs.readFileSync(`${ARTIFACTS_DIR}/${sourcePath}/${sourceName}.json`).toString());
+      const { abi } = JSON.parse(fs.readFileSync(`${ARTIFACTS_DIR}/${sourcePath}/${sourceName}.js`).toString());
       for (const functionAbi of abi) {
         if (functionAbi.type === "function") {
           inheritedFunctions[functionAbi.name] = sourcePath;
@@ -84,7 +84,7 @@ function getContractDataFromDeployments() {
   for (const chainName of chainDirectories) {
     let chainId;
     try {
-      chainId = fs.readFileSync(`${DEPLOYMENTS_DIR}/${chainName}/.chainId`).toString();
+      chainId = JSON.parse(fs.readFileSync(`${DEPLOYMENTS_DIR}/${chainName}/.chain`).toString()).chainId;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       console.log(`No chainId file found for ${chainName}`);
@@ -97,7 +97,12 @@ function getContractDataFromDeployments() {
         fs.readFileSync(`${DEPLOYMENTS_DIR}/${chainName}/${contractName}.json`).toString(),
       );
       const inheritedFunctions = metadata ? getInheritedFunctions(JSON.parse(metadata).sources, contractName) : {};
-      contracts[contractName] = { address, abi, inheritedFunctions, deployedOnBlock: receipt?.blockNumber };
+      contracts[contractName] = {
+        address,
+        abi,
+        inheritedFunctions,
+        deployedOnBlock: receipt?.blockNumber ? parseInt(receipt.blockNumber.toString(), 16) : undefined,
+      };
     }
     output[chainId] = contracts;
   }
@@ -108,7 +113,7 @@ function getContractDataFromDeployments() {
  * Generates the TypeScript contract definition file based on the json output of the contract deployment scripts
  * This script should be run last.
  */
-const generateTsAbis: DeployFunction = async function () {
+export default async function generateTsAbis() {
   const TARGET_DIR = "../nextjs/contracts/";
   const allContractsData = getContractDataFromDeployments();
 
@@ -131,6 +136,32 @@ const generateTsAbis: DeployFunction = async function () {
   );
 
   console.log(`📝 Updated TypeScript contract definition file on ${TARGET_DIR}deployedContracts.ts`);
-};
 
-export default generateTsAbis;
+  // Copy Bounty ABI
+  const bountyArtifactPath = `${ARTIFACTS_DIR}/Bounty.js`;
+
+  console.log(bountyArtifactPath);
+  if (fs.existsSync(bountyArtifactPath)) {
+    const bountyArtifactModule = await import(`.${bountyArtifactPath}`);
+    const bountyAbi = bountyArtifactModule.Artifact_Bounty.abi;
+
+    const bountyFileContent = `
+// A simple mapping from the contract's enum number to a readable string
+export const BountyStatus = ["Open", "Submitted", "Approved", "Rejected", "Disputed"];
+
+// The ABI can be found in packages/hardhat/generated/artifacts/Bounty.js
+export const bountyABI = ${JSON.stringify(bountyAbi)} as const;
+`;
+
+    fs.writeFileSync(
+      `${TARGET_DIR}BountyABI.ts`,
+      await prettier.format(bountyFileContent, {
+        parser: "typescript",
+      }),
+    );
+
+    console.log(`📝 Updated Bounty ABI file on ${TARGET_DIR}BountyABI.ts`);
+  } else {
+    console.warn(`⚠️  Bounty artifact not found at ${bountyArtifactPath}`);
+  }
+}

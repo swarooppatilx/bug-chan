@@ -6,7 +6,13 @@ pragma solidity ^0.8.13;
  * @dev A contract representing a single bug bounty with a locked amount of ETH.
  */
 contract Bounty {
-    enum Status { Open, Submitted, Approved, Rejected, Disputed }
+    enum Status {
+        Open,
+        Submitted,
+        Approved,
+        Rejected,
+        Disputed
+    }
 
     address public owner;
     uint256 public amount;

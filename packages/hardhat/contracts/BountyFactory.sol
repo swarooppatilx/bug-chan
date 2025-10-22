@@ -21,11 +21,11 @@ contract BountyFactory {
     function createBounty(address _owner, string memory _cid) external payable returns (address) {
         // CRITICAL FIX: The `value: msg.value` forwards the ETH sent with this
         // transaction to the new Bounty contract's constructor, funding it.
-        Bounty newBounty = new Bounty{value: msg.value}(_owner, _cid);
-        
+        Bounty newBounty = new Bounty{ value: msg.value }(_owner, _cid);
+
         address newBountyAddress = address(newBounty);
         deployedBounties.push(newBountyAddress);
-        
+
         emit BountyCreated(newBountyAddress, _owner, _cid, msg.value);
         return newBountyAddress;
     }
