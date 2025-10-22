@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { getJWT } from "@lighthouse-web3/kavach";
 import lighthouse from "@lighthouse-web3/sdk";
 import { formatEther, parseEther } from "viem";
 import { useAccount, useReadContracts, useSignMessage, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
@@ -111,28 +112,27 @@ export default function BountyDetailsPage() {
       // Authenticate with Lighthouse (sign message)
       const { data: auth } = await lighthouse.getAuthMessage(connectedAddress);
       if (!auth?.message) throw new Error("Failed to get auth message from Lighthouse");
-      const signedMessage = await signMessageAsync({ message: String(auth.message) });
+      const signedMessage = await signMessageAsync({ message: auth.message });
+      const { JWT } = await getJWT(connectedAddress, signedMessage);
+      if (!JWT) throw new Error("Failed to retrieve JWT Token from Lighthouse");
       notification.info("Uploading encrypted report to IPFS...");
       // Prepare a FileList since the browser SDK expects a FileList for uploadEncrypted
-      const jsonText = JSON.stringify(payload, null, 2);
+      const jsonText = JSON.stringify(payload);
       const reportFile = new File([jsonText], "bug-report.json", { type: "application/json" });
       const dt = new DataTransfer();
       dt.items.add(reportFile);
-      const fileList = dt.files; // FileList
+      // const fileList = dt.files; // FileList
 
-      const progressCallback = (data: { total: number; uploaded: number }) => {
-        const pct = ((data.uploaded / data.total) * 100).toFixed(0);
-        console.debug(`Lighthouse upload progress: ${pct}%`);
-      };
-      const encResponse = await (lighthouse as any).uploadEncrypted(
-        fileList,
-        apiKey,
-        connectedAddress,
-        signedMessage,
-        progressCallback,
-      );
+      // const progressCallback = (data) => {
+      //   console.log(data);
+      //   // const pct = ((data.uploaded / data.total) * 100).toFixed(0);
+      //   // console.debug(`Lighthouse upload progress: ${pct}%`);
+      // };
+      const encResponse = await lighthouse.textUploadEncrypted(jsonText, apiKey, connectedAddress, JWT);
+
       // Response commonly: { data: [ { Hash, Name, Size } ] }
       const data = encResponse?.data as unknown;
+
       const reportCid: string | undefined = Array.isArray(data)
         ? (data as Array<{ Hash?: string }>)[0]?.Hash
         : (data as { Hash?: string } | undefined)?.Hash;
@@ -143,9 +143,13 @@ export default function BountyDetailsPage() {
       const ownerAddr = owner?.result as string | undefined;
       if (ownerAddr && ownerAddr !== connectedAddress) {
         try {
-          await (lighthouse as any).shareFile(connectedAddress as string, signedMessage as string, reportCid, [
-            ownerAddr as string,
-          ]);
+          const shareResponse = await lighthouse.shareFile(
+            connectedAddress as string,
+            [ownerAddr as string],
+            reportCid,
+            JWT,
+          );
+          console.log(shareResponse);
         } catch (shareErr) {
           console.warn("Failed to share file with owner", shareErr);
         }

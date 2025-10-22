@@ -1653,6 +1653,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lighthouse-web3/kavach@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@lighthouse-web3/kavach@npm:0.2.1"
+  dependencies:
+    bls-eth-wasm: ^1.1.1
+    joi: ^17.7.0
+  checksum: b0c4ced9ba8059f73f40feaa4a2dd4ce4881fdb0fa4b53342ab3ec8d97a41bed2f3358526094feeb7cc56da2edc718ab132ba3095eadd23f2785fa9231b93eb1
+  languageName: node
+  linkType: hard
+
 "@lighthouse-web3/sdk@npm:^0.4.3":
   version: 0.4.3
   resolution: "@lighthouse-web3/sdk@npm:0.4.3"
@@ -14182,6 +14192,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "se-2@workspace:."
   dependencies:
+    "@lighthouse-web3/kavach": ^0.2.1
     "@lighthouse-web3/sdk": ^0.4.3
     husky: ~9.1.6
     lint-staged: ~13.2.2

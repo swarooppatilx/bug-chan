@@ -57,7 +57,5 @@
 	"engines": {
 		"node": ">=20.18.3"
 	},
-	"dependencies": {
-		"@lighthouse-web3/sdk": "^0.4.3"
-	}
+	"dependencies": {}
 }
