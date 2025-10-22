@@ -56,8 +56,5 @@
 	"packageManager": "yarn@3.2.3",
 	"engines": {
 		"node": ">=20.18.3"
-	},
-	"dependencies": {
-		"@lighthouse-web3/sdk": "^0.4.3"
 	}
 }
