@@ -24,7 +24,7 @@ export const Footer = () => {
           <div className="flex flex-col items-center md:items-end gap-3">
             <div className="flex items-start justify-end  text-sm font-roboto text-gray-400">
               <a
-                href="https://github.com/yourusername/bugchan"
+                href="https://github.com/swarooppatilx/bug-chan"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-2 hover:text-[var(--color-secondary)] transition-colors duration-300"
