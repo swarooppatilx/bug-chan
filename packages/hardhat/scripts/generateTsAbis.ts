@@ -83,7 +83,7 @@ function getContractDataFromDeployments() {
   for (const chainName of chainDirectories) {
     let chainId;
     try {
-      chainId = fs.readFileSync(`${DEPLOYMENTS_DIR}/${chainName}/.chainId`).toString();
+      chainId = JSON.parse(fs.readFileSync(`${DEPLOYMENTS_DIR}/${chainName}/.chain`).toString()).chainId;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       console.log(`No chainId file found for ${chainName}`);
@@ -96,7 +96,12 @@ function getContractDataFromDeployments() {
         fs.readFileSync(`${DEPLOYMENTS_DIR}/${chainName}/${contractName}.json`).toString(),
       );
       const inheritedFunctions = metadata ? getInheritedFunctions(JSON.parse(metadata).sources, contractName) : {};
-      contracts[contractName] = { address, abi, inheritedFunctions, deployedOnBlock: receipt?.blockNumber };
+      contracts[contractName] = {
+        address,
+        abi,
+        inheritedFunctions,
+        deployedOnBlock: receipt?.blockNumber ? parseInt(receipt.blockNumber.toString(), 16) : undefined,
+      };
     }
     output[chainId] = contracts;
   }

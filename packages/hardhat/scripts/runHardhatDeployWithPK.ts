@@ -45,7 +45,8 @@ async function main() {
       shell: process.platform === "win32",
     });
 
-    hardhat.on("exit", code => {
+    hardhat.on("exit", async code => {
+      await generateTsAbis();
       process.exit(code || 0);
     });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -53,7 +54,6 @@ async function main() {
     console.error("Failed to decrypt private key. Wrong password?");
     process.exit(1);
   }
-  await generateTsAbis();
 }
 
 main().catch(console.error);
