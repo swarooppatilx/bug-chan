@@ -8,7 +8,6 @@
 
 import * as fs from "fs";
 import prettier from "prettier";
-import { DeployFunction } from "hardhat-deploy/types";
 
 const generatedContractComment = `
 /**
@@ -108,7 +107,7 @@ function getContractDataFromDeployments() {
  * Generates the TypeScript contract definition file based on the json output of the contract deployment scripts
  * This script should be run last.
  */
-const generateTsAbis: DeployFunction = async function () {
+export default async function generateTsAbis() {
   const TARGET_DIR = "../nextjs/contracts/";
   const allContractsData = getContractDataFromDeployments();
 
@@ -131,6 +130,4 @@ const generateTsAbis: DeployFunction = async function () {
   );
 
   console.log(`📝 Updated TypeScript contract definition file on ${TARGET_DIR}deployedContracts.ts`);
-};
-
-export default generateTsAbis;
+}

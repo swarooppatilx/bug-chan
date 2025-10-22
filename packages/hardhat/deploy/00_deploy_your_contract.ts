@@ -1,18 +1,29 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { deployScript, artifacts } from "#rocketh";
+// const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+//   const { deployer } = await hre.getNamedAccounts();
+//   const { deploy } = hre.deployments;
 
-const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployer } = await hre.getNamedAccounts();
-  const { deploy } = hre.deployments;
+//   // We only deploy the factory. The factory will then deploy Bounty contracts.
+//   await deploy("BountyFactory", {
+//     from: deployer,
+//     args: [],
+//     log: true,
+//     autoMine: true,
+//   });
+// };
 
-  // We only deploy the factory. The factory will then deploy Bounty contracts.
-  await deploy("BountyFactory", {
-    from: deployer,
-    args: [],
-    log: true,
-    autoMine: true,
-  });
-};
+// export default func;
+// func.tags = ["BountyFactory"];
+export default deployScript(
+  async ({ deploy, namedAccounts }) => {
+    const { deployer } = namedAccounts;
 
-export default func;
-func.tags = ["BountyFactory"];
+    await deploy("BountyFactory", {
+      account: deployer,
+      artifact: artifacts.BountyFactory,
+      args: [],
+    });
+  },
+  // finally you can pass tags and dependencies
+  { tags: ["BountyFactory"] },
+);

@@ -3,14 +3,14 @@ dotenv.config();
 import { Wallet } from "ethers";
 import password from "@inquirer/password";
 import { spawn } from "child_process";
-import { config } from "hardhat";
+import generateTsAbis from "./generateTsAbis.ts";
 
 /**
  * Unencrypts the private key and runs the hardhat deploy command
  */
 async function main() {
   const networkIndex = process.argv.indexOf("--network");
-  const networkName = networkIndex !== -1 ? process.argv[networkIndex + 1] : config.defaultNetwork;
+  const networkName = networkIndex !== -1 ? process.argv[networkIndex + 1] : "sepolia";
 
   if (networkName === "localhost" || networkName === "hardhat") {
     // Deploy command on the localhost network
@@ -53,6 +53,7 @@ async function main() {
     console.error("Failed to decrypt private key. Wrong password?");
     process.exit(1);
   }
+  await generateTsAbis();
 }
 
 main().catch(console.error);
