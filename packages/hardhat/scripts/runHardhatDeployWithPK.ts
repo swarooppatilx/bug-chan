@@ -20,7 +20,8 @@ async function main() {
       shell: process.platform === "win32",
     });
 
-    hardhat.on("exit", code => {
+    hardhat.on("exit", async code => {
+      await generateTsAbis();
       process.exit(code || 0);
     });
     return;
