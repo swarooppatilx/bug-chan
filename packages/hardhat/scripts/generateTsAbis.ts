@@ -146,8 +146,9 @@ export default async function generateTsAbis() {
     const bountyAbi = bountyArtifactModule.Artifact_Bounty.abi;
 
     const bountyFileContent = `
-// A simple mapping from the contract's enum number to a readable string
-export const BountyStatus = ["Open", "Submitted", "Approved", "Rejected", "Disputed"];
+// Enum string maps for UI
+export const BountyStatus = ["Open", "Closed"] as const;
+export const SubmissionStatus = ["None", "Pending", "Accepted", "Rejected", "Refunded"] as const;
 
 // The ABI can be found in packages/hardhat/generated/artifacts/Bounty.js
 export const bountyABI = ${JSON.stringify(bountyAbi)} as const;

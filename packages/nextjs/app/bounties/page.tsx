@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatEther } from "viem";
-import { useAccount } from "wagmi";
+import { formatEther, parseAbiItem } from "viem";
+import { useAccount, useChainId, usePublicClient } from "wagmi";
 import { useReadContracts } from "wagmi";
 import { BugAntIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
+import deployedContracts from "~~/contracts/deployedContracts";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
 type BountyCardProps = {
@@ -16,9 +17,21 @@ type BountyCardProps = {
   amount: bigint;
   status: number;
   cid: string;
+  submissionCount: number;
+  hasSubmitted: boolean;
+  connectedAddress?: string | undefined;
 };
 
-const BountyCard = ({ id, owner, amount, status, cid }: BountyCardProps) => {
+const BountyCard = ({
+  id,
+  owner,
+  amount,
+  status,
+  cid,
+  submissionCount,
+  hasSubmitted,
+  connectedAddress,
+}: BountyCardProps) => {
   const [metadata, setMetadata] = useState({
     title: "Loading bounty details...",
     description: "...",
@@ -83,6 +96,19 @@ const BountyCard = ({ id, owner, amount, status, cid }: BountyCardProps) => {
           <Address address={owner} format="short" />
         </div>
       </div>
+      <div className="flex items-center justify-between text-sm mb-4">
+        <div className="text-gray-400 font-roboto">
+          Submissions: <span className="text-white font-medium">{submissionCount}</span>
+        </div>
+        {hasSubmitted && connectedAddress && (
+          <Link
+            href={`/reports/${id}?researcher=${connectedAddress}`}
+            className="px-2 py-1 bg-purple-900/30 text-purple-300 border border-purple-700 text-xs font-roboto hover:bg-purple-900/40"
+          >
+            Submitted
+          </Link>
+        )}
+      </div>
       <Link
         href={`/bounties/${id}`}
         className="block w-full text-center px-4 py-2 bg-[var(--color-primary)] hover:opacity-90 text-white font-roboto text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95"
@@ -95,6 +121,9 @@ const BountyCard = ({ id, owner, amount, status, cid }: BountyCardProps) => {
 
 export default function BountiesPage() {
   const { address: connectedAddress } = useAccount();
+  const chainId = useChainId();
+  const publicClient = usePublicClient();
+  const [committedMap, setCommittedMap] = useState<Map<string, bigint>>(new Map());
 
   const { data: deployedBounties, isLoading: isLoadingAddresses } = useScaffoldReadContract({
     contractName: "BountyFactory",
@@ -102,12 +131,42 @@ export default function BountiesPage() {
     watch: true,
   });
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadCommitted = async () => {
+      try {
+        const chainDecl = (deployedContracts as any)[chainId];
+        const factoryDecl = chainDecl?.BountyFactory;
+        const factoryAddress = factoryDecl?.address as `0x${string}` | undefined;
+        if (!publicClient || !factoryAddress) return;
+        const createdEvent = parseAbiItem(
+          "event BountyCreated(address indexed bountyAddress, address indexed owner, string cid, uint256 amount, uint256 stakeAmount, uint256 duration)",
+        );
+        const logs = await publicClient.getLogs({ address: factoryAddress, event: createdEvent, fromBlock: 0n });
+        const cmap = new Map<string, bigint>();
+        for (const log of logs as any[]) {
+          cmap.set(log.args?.bountyAddress as string, (log.args?.amount as bigint) ?? 0n);
+        }
+        if (!cancelled) {
+          setCommittedMap(cmap);
+        }
+      } catch (e) {
+        console.warn("Failed to load committed amounts", e);
+      }
+    };
+    loadCommitted();
+    return () => {
+      cancelled = true;
+    };
+  }, [publicClient, chainId]);
+
   const bountyContractsToRead = useMemo(() => {
     return (deployedBounties || []).flatMap(address => [
       { address, abi: bountyABI, functionName: "owner" },
       { address, abi: bountyABI, functionName: "amount" },
       { address, abi: bountyABI, functionName: "status" },
       { address, abi: bountyABI, functionName: "cid" },
+      { address, abi: bountyABI, functionName: "getSubmitters" },
     ]);
   }, [deployedBounties]);
 
@@ -121,19 +180,35 @@ export default function BountiesPage() {
   const bounties = useMemo(() => {
     if (!bountiesOnChainData || !deployedBounties) return [];
 
-    const processedBounties = [];
-    for (let i = 0; i < bountiesOnChainData.length; i += 4) {
-      const bountyIndex = i / 4;
+    const processedBounties: Array<{
+      id: string;
+      owner: string;
+      amount: bigint;
+      status: number;
+      cid: string;
+      submissionCount: number;
+      hasSubmitted: boolean;
+    }> = [];
+    for (let i = 0; i < bountiesOnChainData.length; i += 5) {
+      const bountyIndex = i / 5;
+      const submitters = (bountiesOnChainData[i + 4]?.result as string[]) || [];
+      const hasSubmitted = !!(
+        connectedAddress && submitters.some(s => s.toLowerCase() === connectedAddress.toLowerCase())
+      );
       processedBounties.push({
-        id: deployedBounties[bountyIndex],
+        id: deployedBounties[bountyIndex] as string,
         owner: bountiesOnChainData[i]?.result as string,
-        amount: bountiesOnChainData[i + 1]?.result as bigint,
+        amount:
+          (committedMap.get(deployedBounties[bountyIndex] as string) as bigint | undefined) ??
+          ((bountiesOnChainData[i + 1]?.result as bigint) || 0n),
         status: bountiesOnChainData[i + 2]?.result as number,
         cid: bountiesOnChainData[i + 3]?.result as string,
+        submissionCount: submitters.length,
+        hasSubmitted,
       });
     }
     return processedBounties.sort((a, b) => a.status - b.status);
-  }, [bountiesOnChainData, deployedBounties]);
+  }, [bountiesOnChainData, deployedBounties, connectedAddress, committedMap]);
 
   const isLoading = isLoadingAddresses || (isLoadingBountiesData && bounties.length === 0);
 
@@ -184,6 +259,9 @@ export default function BountiesPage() {
               amount={bounty.amount}
               status={bounty.status}
               cid={bounty.cid}
+              submissionCount={bounty.submissionCount}
+              hasSubmitted={bounty.hasSubmitted}
+              connectedAddress={connectedAddress}
             />
           ))}
         </div>
@@ -211,14 +289,8 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case "Open":
       return "bg-blue-900/30 text-blue-400 border border-blue-700";
-    case "Submitted":
-      return "bg-purple-900/30 text-purple-400 border border-purple-700";
-    case "Approved":
-      return "bg-green-900/30 text-green-400 border border-green-700";
-    case "Rejected":
-      return "bg-red-900/30 text-red-400 border border-red-700";
-    case "Disputed":
-      return "bg-yellow-900/30 text-yellow-400 border border-yellow-700";
+    case "Closed":
+      return "bg-gray-800 text-gray-400 border border-gray-700";
     default:
       return "bg-gray-800 text-gray-400 border border-gray-700";
   }

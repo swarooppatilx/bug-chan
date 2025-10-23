@@ -1,12 +1,11 @@
 @import "tailwindcss";
 
-
 @theme {
   --shadow-center: 0 0 12px -2px rgb(0 0 0 / 0.05);
   --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --color-primary: #5745FF;
-  --color-secondary: #DBFF77;
-  --color-gray: #0F0F0F;
+  --color-primary: #5745ff;
+  --color-secondary: #dbff77;
+  --color-gray: #0f0f0f;
   --font-akira: var(--font-akira);
   --font-roboto: var(--font-roboto);
 }

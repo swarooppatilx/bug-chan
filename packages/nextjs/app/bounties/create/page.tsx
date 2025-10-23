@@ -23,6 +23,8 @@ type BountyForm = {
   amount: string;
   projectAddress: string;
   severity: "Low" | "Medium" | "High" | "Critical";
+  stake: string;
+  durationDays: string;
 };
 
 type FormFieldProps = {
@@ -53,6 +55,8 @@ export default function CreateBountyPage() {
     amount: "",
     projectAddress: connectedAddress || "",
     severity: "Medium",
+    stake: "0.01",
+    durationDays: "7",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -64,8 +68,17 @@ export default function CreateBountyPage() {
       notification.error("Bounty amount must be greater than 0.");
       return;
     }
+    if (!form.stake || parseFloat(form.stake) <= 0) {
+      notification.error("Stake must be greater than 0.");
+      return;
+    }
     if (!form.projectAddress) {
       notification.error("Project Address (Owner) is required.");
+      return;
+    }
+    const durationDaysNum = parseInt(form.durationDays || "0", 10);
+    if (!Number.isFinite(durationDaysNum) || durationDaysNum <= 0) {
+      notification.error("Duration must be a positive number of days.");
       return;
     }
     setIsSubmitting(true);
@@ -87,7 +100,7 @@ export default function CreateBountyPage() {
 
       await writeBountyFactoryAsync({
         functionName: "createBounty",
-        args: [form.projectAddress, cid],
+        args: [form.projectAddress, cid, parseEther(form.stake), BigInt(durationDaysNum * 24 * 60 * 60)],
         value: parseEther(form.amount),
       });
 
@@ -139,6 +152,34 @@ export default function CreateBountyPage() {
                   value={form.amount}
                   onChange={value => setForm({ ...form, amount: value })}
                   placeholder="0.1"
+                />
+              </FormField>
+
+              <FormField
+                label="Stake (ETH)"
+                icon={<CurrencyDollarIcon className="h-5 w-5" />}
+                helperText="Researchers must stake exactly this amount to submit."
+              >
+                <EtherInput
+                  value={form.stake}
+                  onChange={value => setForm({ ...form, stake: value })}
+                  placeholder="0.01"
+                />
+              </FormField>
+
+              <FormField
+                label="Duration (days)"
+                icon={<DocumentTextIcon className="h-5 w-5" />}
+                helperText="How long the bounty stays open before it closes automatically."
+              >
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={form.durationDays}
+                  onChange={e => setForm({ ...form, durationDays: e.target.value })}
+                  className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
+                  placeholder="7"
                 />
               </FormField>
 
