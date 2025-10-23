@@ -60,14 +60,14 @@ export const FaucetButton = () => {
         </div>
       )}
       <button
-        className="px-3 py-2 bg-[var(--color-primary)] hover:opacity-90 text-white font-roboto text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-[var(--color-primary)]/30"
+        className="px-4 py-4 bg-[var(--color-primary)] hover:opacity-90 text-white font-roboto text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-[var(--color-primary)]/30"
         onClick={sendETH}
         disabled={loading}
       >
         {!loading ? (
           <BanknotesIcon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
         ) : (
-          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
         )}
       </button>
     </div>
