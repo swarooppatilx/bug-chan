@@ -4,11 +4,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { getJWT } from "@lighthouse-web3/kavach";
 import lighthouse from "@lighthouse-web3/sdk";
-import { formatEther, parseEther } from "viem";
-import { useAccount, useReadContracts, useSignMessage, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { formatEther, parseAbiItem, parseEther } from "viem";
+import {
+  useAccount,
+  useChainId,
+  usePublicClient,
+  useReadContracts,
+  useSignMessage,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
 import { BugAntIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
+import deployedContracts from "~~/contracts/deployedContracts";
 import { notification } from "~~/utils/scaffold-eth";
 
 export default function BountyDetailsPage() {
@@ -19,10 +28,11 @@ export default function BountyDetailsPage() {
   const [severity, setSeverity] = useState("Medium");
   const [description, setDescription] = useState("");
   const [contact, setContact] = useState("");
-  const [stakeEth, setStakeEth] = useState("0.01");
+  const [stakeEth, setStakeEth] = useState("0.00");
   const [metadata, setMetadata] = useState({ title: "Loading...", description: "Loading...", severity: "Medium" });
-  const [newMinStakeEth, setNewMinStakeEth] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitters, setSubmitters] = useState<string[]>([]);
+  const [committedAmount, setCommittedAmount] = useState<bigint>(0n);
 
   const { data: hash, error, isPending, writeContractAsync } = useWriteContract();
   const { signMessageAsync } = useSignMessage();
@@ -33,19 +43,46 @@ export default function BountyDetailsPage() {
       { address: bountyAddress, abi: bountyABI, functionName: "amount" },
       { address: bountyAddress, abi: bountyABI, functionName: "cid" },
       { address: bountyAddress, abi: bountyABI, functionName: "status" },
-      { address: bountyAddress, abi: bountyABI, functionName: "reportCid" },
-      { address: bountyAddress, abi: bountyABI, functionName: "researcher" },
-      { address: bountyAddress, abi: bountyABI, functionName: "minStake" },
-      { address: bountyAddress, abi: bountyABI, functionName: "stakedAmount" },
+      { address: bountyAddress, abi: bountyABI, functionName: "stakeAmount" },
+      { address: bountyAddress, abi: bountyABI, functionName: "endTime" },
+      { address: bountyAddress, abi: bountyABI, functionName: "getSubmitters" },
     ],
     query: {
       refetchInterval: 5000,
     },
   });
 
-  const [owner, amount, cid, status, reportCid, researcher, minStake] = bountyData || [];
+  const [owner, amount, cid, status, stakeAmount, endTimeResult, submittersResult] = bountyData || [];
 
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+  const chainId = useChainId();
+  const publicClient = usePublicClient();
+  useEffect(() => {
+    const loadCommitted = async () => {
+      try {
+        const chainDecl = (deployedContracts as any)[chainId];
+        const factoryDecl = chainDecl?.BountyFactory;
+        const factoryAddress = factoryDecl?.address as `0x${string}` | undefined;
+        if (!publicClient || !factoryAddress) return;
+        const createdEvent = parseAbiItem(
+          "event BountyCreated(address indexed bountyAddress, address indexed owner, string cid, uint256 amount, uint256 stakeAmount, uint256 duration)",
+        );
+        const logs = await publicClient.getLogs({
+          address: factoryAddress,
+          event: createdEvent,
+          args: { bountyAddress },
+          fromBlock: 0n,
+        });
+        const last = (logs as any[]).at(-1);
+        const amt = (last?.args?.amount as bigint) ?? 0n;
+        setCommittedAmount(amt);
+      } catch (e) {
+        console.warn("Failed to load committed amount", e);
+      }
+    };
+    loadCommitted();
+  }, [publicClient, chainId, bountyAddress]);
 
   useEffect(() => {
     if (isConfirmed) {
@@ -82,16 +119,40 @@ export default function BountyDetailsPage() {
     fetchMetadata();
   }, [cid?.result, bountyAddress]);
 
-  const minStakeEth = useMemo(
-    () => (minStake?.result ? formatEther(minStake.result as bigint) : "0.0"),
-    [minStake?.result],
+  const fixedStakeEth = useMemo(
+    () => (stakeAmount?.result ? formatEther(stakeAmount.result as bigint) : "0.0"),
+    [stakeAmount?.result],
   );
 
+  const endTimeTs = useMemo(() => Number(endTimeResult?.result || 0), [endTimeResult?.result]);
+  const now = Date.now() / 1000;
+  const isExpired = endTimeTs > 0 && now >= endTimeTs;
+
   useEffect(() => {
-    if (minStake?.result) {
-      setStakeEth(formatEther(minStake.result as bigint));
-    }
-  }, [minStake?.result]);
+    if (stakeAmount?.result) setStakeEth(formatEther(stakeAmount.result as bigint));
+  }, [stakeAmount?.result]);
+
+  useEffect(() => {
+    const addrs = (submittersResult?.result as string[] | undefined) || [];
+    setSubmitters(addrs);
+  }, [submittersResult?.result]);
+
+  // Current user's submission tuple (if any)
+  const { data: mySubmission } = useReadContracts({
+    contracts: connectedAddress
+      ? [
+          {
+            address: bountyAddress,
+            abi: bountyABI,
+            functionName: "getSubmission",
+            args: [connectedAddress as `0x${string}`],
+          },
+        ]
+      : [],
+    query: { refetchInterval: 8000, enabled: !!connectedAddress },
+  });
+  const mySubmissionTuple = (mySubmission?.[0]?.result || ["", 0n, 0]) as [string, bigint, number];
+  const hasMySubmission = !!mySubmissionTuple[0];
 
   const handleSubmitReport = async () => {
     if (!title.trim() || !description.trim()) return notification.error("Please fill in title and description");
@@ -155,9 +216,6 @@ export default function BountyDetailsPage() {
         }
       }
       const valueWei = parseEther(stakeEth as `${string}`);
-      if (minStake?.result && valueWei < (minStake.result as bigint)) {
-        return notification.error(`Stake must be at least ${minStakeEth} ETH`);
-      }
       await writeContractAsync({
         address: bountyAddress,
         abi: bountyABI,
@@ -180,26 +238,7 @@ export default function BountyDetailsPage() {
     }
   };
 
-  const handleApprove = () =>
-    writeContractAsync({ address: bountyAddress, abi: bountyABI, functionName: "approveSubmission" });
-  const handleReject = () =>
-    writeContractAsync({ address: bountyAddress, abi: bountyABI, functionName: "rejectSubmission" });
-
-  const handleSetMinStake = async () => {
-    if (!newMinStakeEth || Number(newMinStakeEth) < 0) return notification.error("Enter a valid min stake");
-    try {
-      await writeContractAsync({
-        address: bountyAddress,
-        abi: bountyABI,
-        functionName: "setMinStake",
-        args: [parseEther(newMinStakeEth as `${string}`)],
-      });
-      notification.success("Min stake updated");
-      setNewMinStakeEth("");
-    } catch (e: any) {
-      notification.error(e.shortMessage || "Failed to update min stake");
-    }
-  };
+  // approve/reject are now handled in the Reports page
 
   const isOwner = connectedAddress === owner?.result;
   const currentStatus = status?.result !== undefined ? BountyStatus[status.result] : "Loading...";
@@ -222,7 +261,12 @@ export default function BountyDetailsPage() {
             <div>
               <h3 className="font-roboto text-sm mb-2 text-gray-500">Reward</h3>
               <p className="font-roboto font-semibold text-2xl text-[var(--color-secondary)]">
-                {amount?.result ? `${formatEther(amount.result)} ETH` : "0 ETH"}
+                {formatEther(
+                  (committedAmount && committedAmount > 0n
+                    ? committedAmount
+                    : (amount?.result as bigint) || 0n) as bigint,
+                )}{" "}
+                ETH
               </p>
             </div>
             <div>
@@ -231,6 +275,18 @@ export default function BountyDetailsPage() {
                 {currentStatus}
               </p>
             </div>
+            {currentStatus !== "Closed" && (
+              <div>
+                <h3 className="font-roboto text-sm mb-2 text-gray-500">Closes</h3>
+                <p className="font-roboto text-white">
+                  {endTimeTs
+                    ? isExpired
+                      ? "Closed (time elapsed)"
+                      : new Date(endTimeTs * 1000).toLocaleString()
+                    : "-"}
+                </p>
+              </div>
+            )}
             <div>
               <h3 className="font-roboto text-sm mb-2 text-gray-500">Posted by</h3>
               <Address address={owner?.result as string} />
@@ -239,162 +295,128 @@ export default function BountyDetailsPage() {
               <h3 className="font-roboto text-sm mb-2 text-gray-500">Severity</h3>
               <p className="font-roboto text-white">{metadata.severity}</p>
             </div>
-            {isOwner && (
-              <div>
-                <h3 className="font-roboto text-sm mb-2 text-gray-500">Min Stake</h3>
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 bg-gray-800 border border-gray-700 text-white text-sm font-roboto">
-                    {minStakeEth} ETH
-                  </span>
-                </div>
+            <div>
+              <h3 className="font-roboto text-sm mb-2 text-gray-500">Stake</h3>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-gray-800 border border-gray-700 text-white text-sm font-roboto">
+                  {fixedStakeEth} ETH
+                </span>
               </div>
-            )}
+            </div>
             {cid?.result && (
               <div className="md:col-span-2">
                 <h3 className="font-medium mb-1 text-base-content/60">Bounty CID</h3>
                 <p className="break-all text-sm font-mono">{cid.result}</p>
               </div>
             )}
-            {researcher?.result && researcher.result !== "0x0000000000000000000000000000000000000000" && (
-              <div>
-                <h3 className="font-roboto text-sm mb-2 text-gray-500">Researcher</h3>
-                <Address address={researcher.result as string} />
+            <div className="md:col-span-2">
+              <h3 className="font-roboto text-sm mb-2 text-gray-500">Submissions</h3>
+              <div className="flex items-center justify-between p-3 bg-black border border-gray-800">
+                <div className="text-gray-400 font-roboto">
+                  Total submissions: <span className="text-white font-medium">{submitters.length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {hasMySubmission && connectedAddress && (
+                    <a
+                      href={`/reports/${bountyAddress}?researcher=${connectedAddress}`}
+                      className="px-3 py-1 bg-purple-900/30 text-purple-300 border border-purple-700 text-xs font-roboto hover:bg-purple-900/40"
+                    >
+                      My Submission
+                    </a>
+                  )}
+                  {isOwner && currentStatus === "Open" && (
+                    <a
+                      href={`/reports`}
+                      className="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-white text-xs border border-gray-700 font-roboto"
+                    >
+                      Review in Reports
+                    </a>
+                  )}
+                </div>
               </div>
-            )}
-            {reportCid?.result && (
-              <div className="md:col-span-2">
-                <h3 className="font-medium mb-1 text-base-content/60">Report CID</h3>
-                <p className="break-all text-sm font-mono">{reportCid.result}</p>
-              </div>
-            )}
+              {isOwner && currentStatus === "Open" && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() =>
+                      writeContractAsync({ address: bountyAddress, abi: bountyABI, functionName: "close" })
+                    }
+                    disabled={isPending}
+                    className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-sm font-roboto border border-red-900"
+                  >
+                    {isPending ? (
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      "Close Bounty"
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {currentStatus === "Open" && (
+          {currentStatus === "Open" && !isExpired && (
             <div className="mt-8 pt-6 border-t border-gray-800">
               <h2 className="text-xl font-akira mb-2 text-white">Submit Vulnerability Report</h2>
               <p className="text-sm text-gray-400 font-roboto mb-6">
                 Provide enough detail to reproduce the issue. Your stake discourages spam and is refunded on approval.
               </p>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Title"
-                  className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                />
-                <select
-                  className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
-                  value={severity}
-                  onChange={e => setSeverity(e.target.value)}
-                >
-                  <option>Low</option>
-                  <option>Medium</option>
-                  <option>High</option>
-                  <option>Critical</option>
-                </select>
-                <div>
-                  <textarea
-                    className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors min-h-40"
-                    placeholder="Describe the vulnerability, reproduction steps, expected vs actual behavior, impacted components, and potential impact..."
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    maxLength={5000}
-                  />
-                  <div className="mt-2 flex justify-between text-xs text-gray-500 font-roboto">
-                    <span>Tip: Include minimal PoC or steps to reproduce.</span>
-                    <span>{description.length}/5000</span>
-                  </div>
+              {connectedAddress && hasMySubmission ? (
+                <div className="text-yellow-400 font-roboto bg-black border border-yellow-700/50 p-4">
+                  You have already submitted a report for this bounty from this wallet.
                 </div>
-                <input
-                  type="text"
-                  placeholder="Contact (email, Telegram, ENS, etc.)"
-                  className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
-                  value={contact}
-                  onChange={e => setContact(e.target.value)}
-                />
-                <div>
-                  <label className="block mb-2">
-                    <span className="flex justify-between text-sm text-gray-400 font-roboto">
-                      <span>Stake (ETH)</span>
-                      <span>Min: {minStakeEth} ETH</span>
-                    </span>
-                  </label>
+              ) : (
+                <div className="space-y-4">
                   <input
-                    type="number"
-                    min={minStakeEth}
-                    step="0.001"
+                    type="text"
+                    placeholder="Title"
                     className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
-                    value={stakeEth}
-                    onChange={e => setStakeEth(e.target.value)}
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
                   />
+                  <select
+                    className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
+                    value={severity}
+                    onChange={e => setSeverity(e.target.value)}
+                  >
+                    <option>Low</option>
+                    <option>Medium</option>
+                    <option>High</option>
+                    <option>Critical</option>
+                  </select>
+                  <div>
+                    <textarea
+                      className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors min-h-40"
+                      placeholder="Describe the vulnerability, reproduction steps, expected vs actual behavior, impacted components, and potential impact..."
+                      value={description}
+                      onChange={e => setDescription(e.target.value)}
+                      maxLength={5000}
+                    />
+                    <div className="mt-2 flex justify-between text-xs text-gray-500 font-roboto">
+                      <span>Tip: Include minimal PoC or steps to reproduce.</span>
+                      <span>{description.length}/5000</span>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Contact (email, Telegram, ENS, etc.)"
+                    className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
+                    value={contact}
+                    onChange={e => setContact(e.target.value)}
+                  />
+                  <div className="text-sm text-gray-400 font-roboto">Stake required: {fixedStakeEth} ETH</div>
+                  <button
+                    onClick={handleSubmitReport}
+                    disabled={isPending || submitting}
+                    className="w-full px-6 py-3 bg-[var(--color-primary)] hover:opacity-90 text-white font-roboto font-medium transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPending || submitting ? (
+                      <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+                    ) : (
+                      "Submit Report & Stake"
+                    )}
+                  </button>
                 </div>
-                <button
-                  onClick={handleSubmitReport}
-                  disabled={isPending || submitting}
-                  className="w-full px-6 py-3 bg-[var(--color-primary)] hover:opacity-90 text-white font-roboto font-medium transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPending || submitting ? (
-                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-                  ) : (
-                    "Submit Report & Stake"
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {currentStatus === "Submitted" && isOwner && (
-            <div className="mt-8 pt-6 border-t border-gray-800 flex gap-4">
-              <button
-                onClick={handleApprove}
-                disabled={isPending}
-                className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-roboto font-medium transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
-              >
-                {isPending ? (
-                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-                ) : (
-                  "Approve Submission"
-                )}
-              </button>
-              <button
-                onClick={handleReject}
-                disabled={isPending}
-                className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-roboto font-medium transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
-              >
-                {isPending ? (
-                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-                ) : (
-                  "Reject Submission"
-                )}
-              </button>
-            </div>
-          )}
-
-          {isOwner && (
-            <div className="mt-6 flex items-end gap-4">
-              <div className="flex-1">
-                <label className="block mb-2 text-sm text-gray-400 font-roboto">Update Min Stake (ETH)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.001"
-                  className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
-                  value={newMinStakeEth}
-                  onChange={e => setNewMinStakeEth(e.target.value)}
-                />
-              </div>
-              <button
-                className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-roboto font-medium transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-700"
-                disabled={isPending || !newMinStakeEth}
-                onClick={handleSetMinStake}
-              >
-                {isPending ? (
-                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  "Set Min Stake"
-                )}
-              </button>
+              )}
             </div>
           )}
         </div>
@@ -407,12 +429,8 @@ const getStatusTextColor = (status: string) => {
   switch (status) {
     case "Open":
       return "text-blue-400";
-    case "Submitted":
-      return "text-purple-400";
-    case "Approved":
-      return "text-green-400";
-    case "Rejected":
-      return "text-red-400";
+    case "Closed":
+      return "text-gray-400";
     default:
       return "text-gray-400";
   }

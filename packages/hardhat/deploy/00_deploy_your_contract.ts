@@ -7,7 +7,8 @@ export default deployScript(
     await deploy("BountyFactory", {
       account: deployer,
       artifact: artifacts.BountyFactory,
-      args: [],
+      // Pass the platform treasury address (using deployer by default)
+      args: [deployer],
     });
   },
   // finally you can pass tags and dependencies

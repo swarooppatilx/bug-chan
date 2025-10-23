@@ -6,24 +6,26 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface BountyFactoryInterface extends Interface {
-    getFunction(nameOrSignature: "createBounty" | "deployedBounties" | "getDeployedBounties"): FunctionFragment;
+    getFunction(nameOrSignature: "createBounty" | "deployedBounties" | "getDeployedBounties" | "platformTreasury"): FunctionFragment;
 
     getEvent(nameOrSignatureOrTopic: "BountyCreated"): EventFragment;
 
-    encodeFunctionData(functionFragment: 'createBounty', values: [AddressLike, string]): string;
+    encodeFunctionData(functionFragment: 'createBounty', values: [AddressLike, string, BigNumberish, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'deployedBounties', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'getDeployedBounties', values?: undefined): string;
+encodeFunctionData(functionFragment: 'platformTreasury', values?: undefined): string;
 
     decodeFunctionResult(functionFragment: 'createBounty', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'deployedBounties', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getDeployedBounties', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'platformTreasury', data: BytesLike): Result;
   }
 
   
     export namespace BountyCreatedEvent {
-      export type InputTuple = [bountyAddress: AddressLike, owner: AddressLike, cid: string, amount: BigNumberish];
-      export type OutputTuple = [bountyAddress: string, owner: string, cid: string, amount: bigint];
-      export interface OutputObject {bountyAddress: string, owner: string, cid: string, amount: bigint };
+      export type InputTuple = [bountyAddress: AddressLike, owner: AddressLike, cid: string, amount: BigNumberish, stakeAmount: BigNumberish, duration: BigNumberish];
+      export type OutputTuple = [bountyAddress: string, owner: string, cid: string, amount: bigint, stakeAmount: bigint, duration: bigint];
+      export interface OutputObject {bountyAddress: string, owner: string, cid: string, amount: bigint, stakeAmount: bigint, duration: bigint };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -67,7 +69,7 @@ decodeFunctionResult(functionFragment: 'getDeployedBounties', data: BytesLike): 
     
     
     createBounty: TypedContractMethod<
-      [_owner: AddressLike, _cid: string, ],
+      [_owner: AddressLike, _cid: string, _stakeAmount: BigNumberish, _duration: BigNumberish, ],
       [string],
       'payable'
     >
@@ -89,11 +91,19 @@ decodeFunctionResult(functionFragment: 'getDeployedBounties', data: BytesLike): 
     >
     
 
+    
+    platformTreasury: TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >
+    
+
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
     getFunction(nameOrSignature: 'createBounty'): TypedContractMethod<
-      [_owner: AddressLike, _cid: string, ],
+      [_owner: AddressLike, _cid: string, _stakeAmount: BigNumberish, _duration: BigNumberish, ],
       [string],
       'payable'
     >;
@@ -107,12 +117,17 @@ getFunction(nameOrSignature: 'getDeployedBounties'): TypedContractMethod<
       [string[]],
       'view'
     >;
+getFunction(nameOrSignature: 'platformTreasury'): TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >;
 
     getEvent(key: 'BountyCreated'): TypedContractEvent<BountyCreatedEvent.InputTuple, BountyCreatedEvent.OutputTuple, BountyCreatedEvent.OutputObject>;
 
     filters: {
       
-      'BountyCreated(address,address,string,uint256)': TypedContractEvent<BountyCreatedEvent.InputTuple, BountyCreatedEvent.OutputTuple, BountyCreatedEvent.OutputObject>;
+      'BountyCreated(address,address,string,uint256,uint256,uint256)': TypedContractEvent<BountyCreatedEvent.InputTuple, BountyCreatedEvent.OutputTuple, BountyCreatedEvent.OutputObject>;
       BountyCreated: TypedContractEvent<BountyCreatedEvent.InputTuple, BountyCreatedEvent.OutputTuple, BountyCreatedEvent.OutputObject>;
     
     };

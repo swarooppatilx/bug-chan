@@ -6,38 +6,54 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface BountyInterface extends Interface {
-    getFunction(nameOrSignature: "amount" | "approveSubmission" | "cid" | "minStake" | "owner" | "rejectSubmission" | "reportCid" | "researcher" | "setMinStake" | "stakedAmount" | "status" | "submitReport"): FunctionFragment;
+    getFunction(nameOrSignature: "acceptSubmission" | "amount" | "cid" | "close" | "closeIfExpired" | "endTime" | "getSubmission" | "getSubmitters" | "owner" | "platformTreasury" | "rejectSubmission" | "stakeAmount" | "status" | "submitReport"): FunctionFragment;
 
-    getEvent(nameOrSignatureOrTopic: "FundsReleased" | "ReportSubmitted" | "StakeDeposited" | "StakeRefunded" | "StakeSlashed" | "SubmissionApproved" | "SubmissionRejected"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "BountyClosed" | "FundsReleased" | "ReportSubmitted" | "StakeDeposited" | "StakeRefunded" | "StakeSlashed" | "SubmissionAccepted" | "SubmissionRejected"): EventFragment;
 
-    encodeFunctionData(functionFragment: 'amount', values?: undefined): string;
-encodeFunctionData(functionFragment: 'approveSubmission', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'acceptSubmission', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'amount', values?: undefined): string;
 encodeFunctionData(functionFragment: 'cid', values?: undefined): string;
-encodeFunctionData(functionFragment: 'minStake', values?: undefined): string;
+encodeFunctionData(functionFragment: 'close', values?: undefined): string;
+encodeFunctionData(functionFragment: 'closeIfExpired', values?: undefined): string;
+encodeFunctionData(functionFragment: 'endTime', values?: undefined): string;
+encodeFunctionData(functionFragment: 'getSubmission', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'getSubmitters', values?: undefined): string;
 encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
-encodeFunctionData(functionFragment: 'rejectSubmission', values?: undefined): string;
-encodeFunctionData(functionFragment: 'reportCid', values?: undefined): string;
-encodeFunctionData(functionFragment: 'researcher', values?: undefined): string;
-encodeFunctionData(functionFragment: 'setMinStake', values: [BigNumberish]): string;
-encodeFunctionData(functionFragment: 'stakedAmount', values?: undefined): string;
+encodeFunctionData(functionFragment: 'platformTreasury', values?: undefined): string;
+encodeFunctionData(functionFragment: 'rejectSubmission', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'stakeAmount', values?: undefined): string;
 encodeFunctionData(functionFragment: 'status', values?: undefined): string;
 encodeFunctionData(functionFragment: 'submitReport', values: [string]): string;
 
-    decodeFunctionResult(functionFragment: 'amount', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'approveSubmission', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'acceptSubmission', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'amount', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'cid', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'minStake', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'close', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'closeIfExpired', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'endTime', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'getSubmission', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'getSubmitters', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'platformTreasury', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'rejectSubmission', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'reportCid', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'researcher', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'setMinStake', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'stakedAmount', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'stakeAmount', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'status', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
   }
 
   
+    export namespace BountyClosedEvent {
+      export type InputTuple = [winners: BigNumberish, totalPaid: BigNumberish];
+      export type OutputTuple = [winners: bigint, totalPaid: bigint];
+      export interface OutputObject {winners: bigint, totalPaid: bigint };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
     export namespace FundsReleasedEvent {
       export type InputTuple = [researcher: AddressLike, amount: BigNumberish];
       export type OutputTuple = [researcher: string, amount: bigint];
@@ -98,7 +114,7 @@ decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
 
   
 
-    export namespace SubmissionApprovedEvent {
+    export namespace SubmissionAcceptedEvent {
       export type InputTuple = [researcher: AddressLike];
       export type OutputTuple = [researcher: string];
       export interface OutputObject {researcher: string };
@@ -156,18 +172,18 @@ decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
 
     
     
-    amount: TypedContractMethod<
-      [],
-      [bigint],
-      'view'
+    acceptSubmission: TypedContractMethod<
+      [_researcher: AddressLike, ],
+      [void],
+      'nonpayable'
     >
     
 
     
-    approveSubmission: TypedContractMethod<
+    amount: TypedContractMethod<
       [],
-      [void],
-      'nonpayable'
+      [bigint],
+      'view'
     >
     
 
@@ -180,9 +196,41 @@ decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
     
 
     
-    minStake: TypedContractMethod<
+    close: TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    closeIfExpired: TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    endTime: TypedContractMethod<
       [],
       [bigint],
+      'view'
+    >
+    
+
+    
+    getSubmission: TypedContractMethod<
+      [_researcher: AddressLike, ],
+      [[string, bigint, bigint]],
+      'view'
+    >
+    
+
+    
+    getSubmitters: TypedContractMethod<
+      [],
+      [string[]],
       'view'
     >
     
@@ -196,39 +244,23 @@ decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
     
 
     
+    platformTreasury: TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >
+    
+
+    
     rejectSubmission: TypedContractMethod<
-      [],
+      [_researcher: AddressLike, ],
       [void],
       'nonpayable'
     >
     
 
     
-    reportCid: TypedContractMethod<
-      [],
-      [string],
-      'view'
-    >
-    
-
-    
-    researcher: TypedContractMethod<
-      [],
-      [string],
-      'view'
-    >
-    
-
-    
-    setMinStake: TypedContractMethod<
-      [_minStake: BigNumberish, ],
-      [void],
-      'nonpayable'
-    >
-    
-
-    
-    stakedAmount: TypedContractMethod<
+    stakeAmount: TypedContractMethod<
       [],
       [bigint],
       'view'
@@ -254,24 +286,44 @@ decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
-    getFunction(nameOrSignature: 'amount'): TypedContractMethod<
+    getFunction(nameOrSignature: 'acceptSubmission'): TypedContractMethod<
+      [_researcher: AddressLike, ],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'amount'): TypedContractMethod<
       [],
       [bigint],
       'view'
-    >;
-getFunction(nameOrSignature: 'approveSubmission'): TypedContractMethod<
-      [],
-      [void],
-      'nonpayable'
     >;
 getFunction(nameOrSignature: 'cid'): TypedContractMethod<
       [],
       [string],
       'view'
     >;
-getFunction(nameOrSignature: 'minStake'): TypedContractMethod<
+getFunction(nameOrSignature: 'close'): TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'closeIfExpired'): TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'endTime'): TypedContractMethod<
       [],
       [bigint],
+      'view'
+    >;
+getFunction(nameOrSignature: 'getSubmission'): TypedContractMethod<
+      [_researcher: AddressLike, ],
+      [[string, bigint, bigint]],
+      'view'
+    >;
+getFunction(nameOrSignature: 'getSubmitters'): TypedContractMethod<
+      [],
+      [string[]],
       'view'
     >;
 getFunction(nameOrSignature: 'owner'): TypedContractMethod<
@@ -279,27 +331,17 @@ getFunction(nameOrSignature: 'owner'): TypedContractMethod<
       [string],
       'view'
     >;
+getFunction(nameOrSignature: 'platformTreasury'): TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >;
 getFunction(nameOrSignature: 'rejectSubmission'): TypedContractMethod<
-      [],
+      [_researcher: AddressLike, ],
       [void],
       'nonpayable'
     >;
-getFunction(nameOrSignature: 'reportCid'): TypedContractMethod<
-      [],
-      [string],
-      'view'
-    >;
-getFunction(nameOrSignature: 'researcher'): TypedContractMethod<
-      [],
-      [string],
-      'view'
-    >;
-getFunction(nameOrSignature: 'setMinStake'): TypedContractMethod<
-      [_minStake: BigNumberish, ],
-      [void],
-      'nonpayable'
-    >;
-getFunction(nameOrSignature: 'stakedAmount'): TypedContractMethod<
+getFunction(nameOrSignature: 'stakeAmount'): TypedContractMethod<
       [],
       [bigint],
       'view'
@@ -315,16 +357,21 @@ getFunction(nameOrSignature: 'submitReport'): TypedContractMethod<
       'payable'
     >;
 
-    getEvent(key: 'FundsReleased'): TypedContractEvent<FundsReleasedEvent.InputTuple, FundsReleasedEvent.OutputTuple, FundsReleasedEvent.OutputObject>;
+    getEvent(key: 'BountyClosed'): TypedContractEvent<BountyClosedEvent.InputTuple, BountyClosedEvent.OutputTuple, BountyClosedEvent.OutputObject>;
+getEvent(key: 'FundsReleased'): TypedContractEvent<FundsReleasedEvent.InputTuple, FundsReleasedEvent.OutputTuple, FundsReleasedEvent.OutputObject>;
 getEvent(key: 'ReportSubmitted'): TypedContractEvent<ReportSubmittedEvent.InputTuple, ReportSubmittedEvent.OutputTuple, ReportSubmittedEvent.OutputObject>;
 getEvent(key: 'StakeDeposited'): TypedContractEvent<StakeDepositedEvent.InputTuple, StakeDepositedEvent.OutputTuple, StakeDepositedEvent.OutputObject>;
 getEvent(key: 'StakeRefunded'): TypedContractEvent<StakeRefundedEvent.InputTuple, StakeRefundedEvent.OutputTuple, StakeRefundedEvent.OutputObject>;
 getEvent(key: 'StakeSlashed'): TypedContractEvent<StakeSlashedEvent.InputTuple, StakeSlashedEvent.OutputTuple, StakeSlashedEvent.OutputObject>;
-getEvent(key: 'SubmissionApproved'): TypedContractEvent<SubmissionApprovedEvent.InputTuple, SubmissionApprovedEvent.OutputTuple, SubmissionApprovedEvent.OutputObject>;
+getEvent(key: 'SubmissionAccepted'): TypedContractEvent<SubmissionAcceptedEvent.InputTuple, SubmissionAcceptedEvent.OutputTuple, SubmissionAcceptedEvent.OutputObject>;
 getEvent(key: 'SubmissionRejected'): TypedContractEvent<SubmissionRejectedEvent.InputTuple, SubmissionRejectedEvent.OutputTuple, SubmissionRejectedEvent.OutputObject>;
 
     filters: {
       
+      'BountyClosed(uint256,uint256)': TypedContractEvent<BountyClosedEvent.InputTuple, BountyClosedEvent.OutputTuple, BountyClosedEvent.OutputObject>;
+      BountyClosed: TypedContractEvent<BountyClosedEvent.InputTuple, BountyClosedEvent.OutputTuple, BountyClosedEvent.OutputObject>;
+    
+
       'FundsReleased(address,uint256)': TypedContractEvent<FundsReleasedEvent.InputTuple, FundsReleasedEvent.OutputTuple, FundsReleasedEvent.OutputObject>;
       FundsReleased: TypedContractEvent<FundsReleasedEvent.InputTuple, FundsReleasedEvent.OutputTuple, FundsReleasedEvent.OutputObject>;
     
@@ -345,8 +392,8 @@ getEvent(key: 'SubmissionRejected'): TypedContractEvent<SubmissionRejectedEvent.
       StakeSlashed: TypedContractEvent<StakeSlashedEvent.InputTuple, StakeSlashedEvent.OutputTuple, StakeSlashedEvent.OutputObject>;
     
 
-      'SubmissionApproved(address)': TypedContractEvent<SubmissionApprovedEvent.InputTuple, SubmissionApprovedEvent.OutputTuple, SubmissionApprovedEvent.OutputObject>;
-      SubmissionApproved: TypedContractEvent<SubmissionApprovedEvent.InputTuple, SubmissionApprovedEvent.OutputTuple, SubmissionApprovedEvent.OutputObject>;
+      'SubmissionAccepted(address)': TypedContractEvent<SubmissionAcceptedEvent.InputTuple, SubmissionAcceptedEvent.OutputTuple, SubmissionAcceptedEvent.OutputObject>;
+      SubmissionAccepted: TypedContractEvent<SubmissionAcceptedEvent.InputTuple, SubmissionAcceptedEvent.OutputTuple, SubmissionAcceptedEvent.OutputObject>;
     
 
       'SubmissionRejected(address)': TypedContractEvent<SubmissionRejectedEvent.InputTuple, SubmissionRejectedEvent.OutputTuple, SubmissionRejectedEvent.OutputObject>;

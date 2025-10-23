@@ -1,48 +1,101 @@
 import { expect } from "chai";
 import { network } from "hardhat";
 
-const { ethers } = await network.connect();
-describe("Bounty staking flow", function () {
-  it("requires min stake and slashes on rejection", async function () {
-    const [owner, researcher] = await ethers.getSigners();
+describe("Bounty lifecycle: submissions, accept/reject, close/settle", function () {
+  it("supports fixed stake, one submission per wallet, treasury stake routing, and reward split on close", async function () {
+    const { ethers } = await network.connect();
+    const [owner, treasury, researcher1, researcher2] = await ethers.getSigners();
 
-    // Deploy factory and create a bounty with 1 ETH reward
+    // Deploy factory with platform treasury
     const Factory = await ethers.getContractFactory("BountyFactory");
-    const factory = await Factory.deploy();
+    const factory = await Factory.connect(owner).deploy(treasury.address);
     await factory.waitForDeployment();
 
     const bountyCid = "bafy-test-bounty";
     const reward = ethers.parseEther("1");
-    const tx = await factory.createBounty(owner.address, bountyCid, { value: reward });
+    const fixedStake = ethers.parseEther("0.02");
+    const duration = 7n * 24n * 60n * 60n; // 7 days
+
+    const tx = await factory
+      .connect(owner)
+      .createBounty(owner.address, bountyCid, fixedStake, duration, { value: reward });
     const receipt = await tx.wait();
-    const event = receipt!.logs.find(l => (l as any).fragment?.name === "BountyCreated") as any;
+    const event = receipt!.logs.find((l: any) => (l as any).fragment?.name === "BountyCreated") as any;
     const bountyAddress: string = event?.args?.bountyAddress;
     const bounty = await ethers.getContractAt("Bounty", bountyAddress);
 
-    // Check default minStake
-    const minStake = await bounty.minStake();
-    expect(minStake).to.be.gt(0n);
+    expect(await bounty.stakeAmount()).to.equal(fixedStake);
+    expect(await bounty.status()).to.equal(0); // Open
 
-    // Submitting below minStake should revert
-    await expect(bounty.connect(researcher).submitReport("bafy-report", { value: minStake - 1n })).to.be.revertedWith(
-      "Insufficient stake",
+    // Wrong stake should revert
+    await expect(bounty.connect(researcher1).submitReport("cid-1", { value: fixedStake - 1n })).to.be.revertedWith(
+      "Stake must equal fixed amount",
     );
 
-    // Successful submission with minStake
-    const submitTx = await bounty.connect(researcher).submitReport("bafy-report", { value: minStake });
-    await submitTx.wait();
-    expect(await bounty.status()).to.equal(1); // Submitted
-    expect(await bounty.stakedAmount()).to.equal(minStake);
+    // First researcher submits
+    await (await bounty.connect(researcher1).submitReport("cid-1", { value: fixedStake })).wait();
 
-    // On rejection, stake should be transferred to owner
-    const ownerBalBefore = await ethers.provider.getBalance(owner.address);
-    const rejectTx = await bounty.connect(owner).rejectSubmission();
-    const rejectRcpt = await rejectTx.wait();
-    const gasUsed = rejectRcpt!.gasUsed * rejectTx.gasPrice!;
-    const ownerBalAfter = await ethers.provider.getBalance(owner.address);
-    // owner balance increases roughly by minStake minus gas. We can't assert exact due to gas, so check >= minStake - small delta
-    expect(ownerBalAfter + gasUsed - ownerBalBefore).to.equal(minStake);
-    expect(await bounty.stakedAmount()).to.equal(0n);
-    expect(await bounty.status()).to.equal(3); // Rejected
+    // Same wallet cannot submit twice
+    await expect(bounty.connect(researcher1).submitReport("cid-1b", { value: fixedStake })).to.be.revertedWith(
+      "Already submitted from this wallet",
+    );
+
+    // Second researcher also submits
+    await (await bounty.connect(researcher2).submitReport("cid-2", { value: fixedStake })).wait();
+
+    // Accept first, reject second; both stakes should be transferred to treasury immediately
+    const treasuryBefore = await ethers.provider.getBalance(treasury.address);
+    await (await bounty.connect(owner).acceptSubmission(researcher1.address)).wait();
+    await (await bounty.connect(owner).rejectSubmission(researcher2.address)).wait();
+    const treasuryAfter = await ethers.provider.getBalance(treasury.address);
+    expect(treasuryAfter - treasuryBefore).to.equal(fixedStake * 2n);
+
+    // Close bounty and settle rewards
+    await (await bounty.connect(owner).close()).wait();
+    expect(await bounty.status()).to.equal(1); // Closed
+
+    // With one accepted winner, entire reward should be paid out to researcher1; contract should be emptied
+    const contractBal = await ethers.provider.getBalance(bountyAddress);
+    expect(contractBal).to.equal(0n);
+
+    const [, , s1] = await bounty.getSubmission(researcher1.address);
+    expect(s1).to.equal(2); // Accepted
+    const [, , s2] = await bounty.getSubmission(researcher2.address);
+    expect(s2).to.equal(3); // Rejected
+  });
+
+  it("allows anyone to close after expiry and refunds untouched submissions", async function () {
+    const { ethers } = await network.connect();
+    const [owner, treasury, researcher1, other] = await ethers.getSigners();
+
+    const Factory = await ethers.getContractFactory("BountyFactory");
+    const factory = await Factory.connect(owner).deploy(treasury.address);
+    await factory.waitForDeployment();
+
+    const reward = ethers.parseEther("0.5");
+    const fixedStake = ethers.parseEther("0.01");
+    const short = 1n; // 1 second
+
+    const tx = await factory.connect(owner).createBounty(owner.address, "cid-short", fixedStake, short, {
+      value: reward,
+    });
+    const rc = await tx.wait();
+    const ev = rc!.logs.find((l: any) => (l as any).fragment?.name === "BountyCreated") as any;
+    const bounty = await ethers.getContractAt("Bounty", ev!.args!.bountyAddress);
+
+    // Submit once, but do not accept/reject before expiry
+    await (await bounty.connect(researcher1).submitReport("cid-r1", { value: fixedStake })).wait();
+
+    // advance time beyond endTime
+    const endTime = await bounty.endTime();
+    await ethers.provider.send("evm_setNextBlockTimestamp", [Number(endTime) + 1]);
+    await ethers.provider.send("evm_mine", []);
+
+    // Anyone (not owner) can close after expiry; stake should be refunded
+    const balBefore = await ethers.provider.getBalance(researcher1.address);
+    await (await bounty.connect(other).closeIfExpired()).wait();
+    expect(await bounty.status()).to.equal(1); // Closed
+    const balAfter = await ethers.provider.getBalance(researcher1.address);
+    expect(balAfter).to.be.greaterThan(balBefore); // received refunded stake
   });
 });
