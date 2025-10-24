@@ -6,10 +6,13 @@ import { ThemeProvider } from "~~/components/ThemeProvider";
 import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
-export const metadata = getMetadata({
-  title: "BugChan",
-  description: "A Decentralized Bug Bounty Platform",
-});
+export const metadata = {
+  metadataBase: new URL("https://bugchan.xyz"),
+  ...getMetadata({
+    title: "BugChan",
+    description: "A Decentralized Bug Bounty Platform",
+  }),
+};
 
 const akiraExpanded = localFont({
   src: [{ path: "../public/fonts/AkiraExpanded.otf", weight: "800" }],
