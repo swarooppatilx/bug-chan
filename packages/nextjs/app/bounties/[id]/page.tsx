@@ -25,7 +25,6 @@ export default function BountyDetailsPage() {
   const bountyAddress = id as `0x${string}`;
   const { address: connectedAddress } = useAccount();
   const [title, setTitle] = useState("");
-  const [severity, setSeverity] = useState("Medium");
   const [description, setDescription] = useState("");
   const [contact, setContact] = useState("");
   const [stakeEth, setStakeEth] = useState("0.00");
@@ -166,7 +165,6 @@ export default function BountyDetailsPage() {
       const apiKey = process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY;
       const payload = {
         title: title.trim(),
-        severity,
         description: description.trim(),
         contact: contact.trim(),
         bountyAddress,
@@ -228,7 +226,6 @@ export default function BountyDetailsPage() {
         value: valueWei,
       });
       setTitle("");
-      setSeverity("Medium");
       setDescription("");
       setContact("");
     } catch (e: any) {
@@ -377,16 +374,6 @@ export default function BountyDetailsPage() {
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                   />
-                  <select
-                    className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
-                    value={severity}
-                    onChange={e => setSeverity(e.target.value)}
-                  >
-                    <option>Low</option>
-                    <option>Medium</option>
-                    <option>High</option>
-                    <option>Critical</option>
-                  </select>
                   <div>
                     <textarea
                       className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors min-h-40"
