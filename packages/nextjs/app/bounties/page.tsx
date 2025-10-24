@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { formatEther, parseAbiItem } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import { useReadContracts } from "wagmi";
@@ -72,6 +74,73 @@ const BountyCard = ({
     fetchMetadata();
   }, [cid, id]);
 
+  // Inline-only Markdown components so line-clamp works in list cards
+  // Also add <br/> after block-like nodes to preserve newlines between paragraphs/headings/list items.
+  const mdInlineComponents = {
+    h1: ({ children, ...props }: any) => (
+      <span className="font-semibold text-white" {...props}>
+        {children}
+        <br />
+      </span>
+    ),
+    h2: ({ children, ...props }: any) => (
+      <span className="font-semibold text-white" {...props}>
+        {children}
+        <br />
+      </span>
+    ),
+    h3: ({ children, ...props }: any) => (
+      <span className="font-semibold text-white" {...props}>
+        {children}
+        <br />
+      </span>
+    ),
+    p: ({ children, ...props }: any) => (
+      <span {...props}>
+        {children}
+        <br />
+      </span>
+    ),
+    strong: (props: any) => <strong className="text-white" {...props} />,
+    em: (props: any) => <em className="italic" {...props} />,
+    a: (props: any) => (
+      <a
+        className="text-[var(--color-secondary)] underline-offset-2 hover:underline"
+        target="_blank"
+        rel="noopener noreferrer"
+        {...props}
+      />
+    ),
+    ul: ({ children }: any) => <span>{children}</span>,
+    ol: ({ children }: any) => <span>{children}</span>,
+    li: ({ children, ...props }: any) => (
+      <span {...props}>
+        • {children}
+        <br />
+      </span>
+    ),
+    code: ({ children, ...props }: any) => (
+      <code className="bg-gray-800 text-[var(--color-secondary)] px-1 rounded" {...props}>
+        {children}
+      </code>
+    ),
+    pre: ({ children }: any) => <span>{children}</span>,
+    blockquote: ({ children }: any) => (
+      <span>
+        “{children}”
+        <br />
+      </span>
+    ),
+    hr: () => null,
+    table: ({ children }: any) => <span>{children}</span>,
+    thead: ({ children }: any) => <span>{children}</span>,
+    tbody: ({ children }: any) => <span>{children}</span>,
+    tr: ({ children }: any) => <span>{children}</span>,
+    td: ({ children }: any) => <span>{children}</span>,
+    th: ({ children }: any) => <span className="font-semibold">{children}</span>,
+    br: () => <br />,
+  };
+
   return (
     <div
       className={`bg-gray-900 border border-gray-800 hover:border-[var(--color-secondary)]/50 p-6 transition-all duration-300 hover:scale-105 ${isMetadataLoading ? "animate-pulse" : ""}`}
@@ -85,7 +154,11 @@ const BountyCard = ({
         </div>
       </div>
       <h2 className="text-xl font-akira mb-3 text-white truncate">{metadata.title}</h2>
-      <p className="mb-4 line-clamp-2 h-12 text-gray-400 font-roboto text-sm">{metadata.description}</p>
+      <div className="mb-4 line-clamp-2 h-12 text-gray-400 font-roboto text-sm break-words">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdInlineComponents}>
+          {metadata.description || ""}
+        </ReactMarkdown>
+      </div>
       <div className="flex justify-between items-center text-sm mb-4 pt-4 border-t border-gray-800">
         <div>
           <p className="text-gray-500 font-roboto text-xs mb-1">Reward</p>

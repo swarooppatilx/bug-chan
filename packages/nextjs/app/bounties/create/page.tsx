@@ -3,6 +3,8 @@
 import { type ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
 import lighthouse from "@lighthouse-web3/sdk";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { parseEther } from "viem";
 import { useAccount } from "wagmi";
 import {
@@ -113,6 +115,46 @@ export default function CreateBountyPage() {
     }
   };
 
+  // Scoped Markdown preview components (styles affect only the live preview)
+  const mdPreviewComponents = {
+    h1: (props: any) => <h1 className="text-2xl font-semibold text-white mt-2 mb-3" {...props} />,
+    h2: (props: any) => <h2 className="text-xl font-semibold text-white mt-2 mb-2.5" {...props} />,
+    h3: (props: any) => <h3 className="text-lg font-semibold text-white mt-2 mb-2" {...props} />,
+    p: (props: any) => <p className="mb-2 leading-relaxed" {...props} />,
+    a: (props: any) => (
+      <a className="text-[var(--color-secondary)] underline-offset-2 hover:underline break-words" {...props} />
+    ),
+    ul: (props: any) => <ul className="list-disc ml-6 my-2 space-y-1" {...props} />,
+    ol: (props: any) => <ol className="list-decimal ml-6 my-2 space-y-1" {...props} />,
+    li: (props: any) => <li className="leading-relaxed" {...props} />,
+    blockquote: (props: any) => (
+      <blockquote className="border-l-4 border-gray-700 pl-3 italic text-gray-400 my-3" {...props} />
+    ),
+    hr: () => <hr className="my-4 border-gray-800" />,
+    code: ({ inline, className, children, ...props }: any) => {
+      if (inline) {
+        return (
+          <code
+            className="px-1.5 py-0.5 rounded bg-gray-800 text-[var(--color-secondary)] font-mono text-[0.85em]"
+            {...props}
+          >
+            {children}
+          </code>
+        );
+      }
+      return (
+        <pre className="bg-black border border-gray-800 p-3 overflow-x-auto text-sm my-3">
+          <code className={className} {...props}>
+            {children}
+          </code>
+        </pre>
+      );
+    },
+    table: (props: any) => <table className="w-full border-collapse my-3" {...props} />,
+    th: (props: any) => <th className="border border-gray-800 px-2 py-1 text-left bg-gray-900" {...props} />,
+    td: (props: any) => <td className="border border-gray-800 px-2 py-1 align-top" {...props} />,
+  };
+
   return (
     <div className="container mx-auto px-4 py-10">
       <div className="max-w-3xl mx-auto bg-gray-900 border border-gray-800 p-8">
@@ -138,9 +180,17 @@ export default function CreateBountyPage() {
               onChange={e => setForm({ ...form, description: e.target.value })}
               className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors min-h-32"
               rows={6}
-              placeholder="Describe the scope, vulnerability impact, and requirements for this bounty..."
+              placeholder="Describe the scope, vulnerability impact, and requirements for this bounty... (Markdown supported)"
               required
             />
+            <p className="mt-1 text-xs text-gray-500 font-roboto">
+              Markdown supported (bold, lists, tables, code, links).
+            </p>
+            <div className="mt-3 p-4 bg-black border border-gray-800 text-gray-300 overflow-hidden max-h-48 whitespace-pre-wrap break-words">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdPreviewComponents}>
+                {form.description || "*Live preview...*"}
+              </ReactMarkdown>
+            </div>
           </FormField>
 
           <div className="pt-4 border-t border-gray-800">

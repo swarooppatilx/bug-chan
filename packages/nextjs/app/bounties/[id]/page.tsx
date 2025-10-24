@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { getJWT } from "@lighthouse-web3/kavach";
 import lighthouse from "@lighthouse-web3/sdk";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { formatEther, parseAbiItem, parseEther } from "viem";
 import {
   useAccount,
@@ -244,6 +246,46 @@ export default function BountyDetailsPage() {
   const isOwner = connectedAddress === owner?.result;
   const currentStatus = status?.result !== undefined ? BountyStatus[status.result] : "Loading...";
 
+  // Scoped Markdown preview components (styles affect only the live preview)
+  const mdPreviewComponents = {
+    h1: (props: any) => <h1 className="text-2xl font-semibold text-white mt-2 mb-3" {...props} />,
+    h2: (props: any) => <h2 className="text-xl font-semibold text-white mt-2 mb-2.5" {...props} />,
+    h3: (props: any) => <h3 className="text-lg font-semibold text-white mt-2 mb-2" {...props} />,
+    p: (props: any) => <p className="mb-2 leading-relaxed" {...props} />,
+    a: (props: any) => (
+      <a className="text-[var(--color-secondary)] underline-offset-2 hover:underline break-words" {...props} />
+    ),
+    ul: (props: any) => <ul className="list-disc ml-6 my-2 space-y-1" {...props} />,
+    ol: (props: any) => <ol className="list-decimal ml-6 my-2 space-y-1" {...props} />,
+    li: (props: any) => <li className="leading-relaxed" {...props} />,
+    blockquote: (props: any) => (
+      <blockquote className="border-l-4 border-gray-700 pl-3 italic text-gray-400 my-3" {...props} />
+    ),
+    hr: () => <hr className="my-4 border-gray-800" />,
+    code: ({ inline, className, children, ...props }: any) => {
+      if (inline) {
+        return (
+          <code
+            className="px-1.5 py-0.5 rounded bg-gray-800 text-[var(--color-secondary)] font-mono text-[0.85em]"
+            {...props}
+          >
+            {children}
+          </code>
+        );
+      }
+      return (
+        <pre className="bg-black border border-gray-800 p-3 overflow-x-auto text-sm my-3">
+          <code className={className} {...props}>
+            {children}
+          </code>
+        </pre>
+      );
+    },
+    table: (props: any) => <table className="w-full border-collapse my-3" {...props} />,
+    th: (props: any) => <th className="border border-gray-800 px-2 py-1 text-left bg-gray-900" {...props} />,
+    td: (props: any) => <td className="border border-gray-800 px-2 py-1 align-top" {...props} />,
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="bg-gray-900 border border-gray-800 p-8">
@@ -255,7 +297,11 @@ export default function BountyDetailsPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-akira mb-3 text-white">{metadata.title}</h2>
-            <p className="whitespace-pre-wrap text-gray-300 font-roboto leading-relaxed">{metadata.description}</p>
+            <div className="prose prose-invert max-w-none font-roboto text-gray-300">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {metadata.description || "No description provided."}
+              </ReactMarkdown>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-800">
@@ -377,14 +423,19 @@ export default function BountyDetailsPage() {
                   <div>
                     <textarea
                       className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors min-h-40"
-                      placeholder="Describe the vulnerability, reproduction steps, expected vs actual behavior, impacted components, and potential impact..."
+                      placeholder="Describe the vulnerability, reproduction steps, expected vs actual behavior, impacted components, and potential impact... (Markdown supported)"
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                       maxLength={5000}
                     />
                     <div className="mt-2 flex justify-between text-xs text-gray-500 font-roboto">
-                      <span>Tip: Include minimal PoC or steps to reproduce.</span>
+                      <span>Markdown supported (bold, lists, tables, code, links).</span>
                       <span>{description.length}/5000</span>
+                    </div>
+                    <div className="mt-3 p-4 bg-black border border-gray-800 text-gray-300 overflow-hidden max-h-48 whitespace-pre-wrap break-words">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdPreviewComponents}>
+                        {description || "*Live preview...*"}
+                      </ReactMarkdown>
                     </div>
                   </div>
                   <input

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import lighthouse from "@lighthouse-web3/sdk";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { formatEther, parseAbiItem } from "viem";
 import {
   useAccount,
@@ -313,9 +315,9 @@ export default function ReportDetailsPage() {
               {reportJson.description && (
                 <div>
                   <strong className="text-gray-400 font-roboto text-sm block mb-2">Description:</strong>
-                  <p className="whitespace-pre-wrap text-gray-300 font-roboto leading-relaxed">
-                    {reportJson.description}
-                  </p>
+                  <div className="font-roboto text-gray-300 leading-relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{reportJson.description}</ReactMarkdown>
+                  </div>
                 </div>
               )}
               {reportJson.contact && (
@@ -404,7 +406,9 @@ function PublicReport({ cid }: { cid: string }) {
       {data.description && (
         <div>
           <strong className="text-gray-400 font-roboto text-sm block mb-2">Description:</strong>
-          <p className="whitespace-pre-wrap text-gray-300 font-roboto leading-relaxed">{data.description}</p>
+          <div className="font-roboto text-gray-300 leading-relaxed">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.description}</ReactMarkdown>
+          </div>
         </div>
       )}
       {data.contact && (

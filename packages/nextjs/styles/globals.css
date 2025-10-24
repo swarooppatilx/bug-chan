@@ -13,3 +13,47 @@
 .button {
   cursor: pointer;
 }
+
+/* Sugar High syntax highlight palette aligned to site theme */
+:root {
+  /* Prefer using your existing theme vars when available */
+  --sh-class: #9b87f5;
+  /* violet (primary accent-ish) */
+  --sh-identifier: #e5e7eb;
+  /* gray-200 for plain identifiers */
+  --sh-sign: #9ca3af;
+  /* gray-400 punctuation/signs */
+  --sh-property: #93c5fd;
+  /* blue-300 for object keys/props */
+  --sh-entity: #34d399;
+  /* green-400 for HTML/solidity entities */
+  --sh-jsxliterals: #a78bfa;
+  /* violet-400 for JSX literals */
+  --sh-string: var(--color-secondary);
+  /* highlight strings with secondary */
+  --sh-keyword: #b794f4;
+  /* violet-300 for keywords */
+  --sh-comment: #6b7280;
+  /* gray-500 comments */
+}
+
+/* Optional darker tune for dark mode if you use theme switching */
+.dark {
+  --sh-class: #a78bfa;
+  /* slightly brighter violet */
+  --sh-identifier: #e5e7eb;
+  /* gray-200 */
+  --sh-sign: #94a3b8;
+  /* slate-400 */
+  --sh-property: #7aa2ff;
+  /* softer blue */
+  --sh-entity: #22c55e;
+  /* green-500 */
+  --sh-jsxliterals: #8b5cf6;
+  /* violet-500 */
+  --sh-string: var(--color-secondary);
+  --sh-keyword: #c4b5fd;
+  /* violet-300/200 mix */
+  --sh-comment: #64748b;
+  /* slate-500 */
+}
