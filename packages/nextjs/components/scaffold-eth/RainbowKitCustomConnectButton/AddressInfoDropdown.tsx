@@ -100,7 +100,18 @@ export const AddressInfoDropdown = ({
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-roboto text-white hover:bg-[var(--color-secondary)]/10 transition-all duration-200 active:scale-95"
             >
               <ArrowTopRightOnSquareIcon className="h-4 w-4 transition-transform duration-200" />
-              <span className="whitespace-nowrap">View on Block Explorer</span>
+              <span className="whitespace-nowrap">View on Blockscout</span>
+            </a>
+          </li>
+          <li className={`list-none ${selectingNetwork ? "hidden" : ""}`}>
+            <a
+              target="_blank"
+              href={"https://explorer.bugchan.xyz"}
+              rel="noopener noreferrer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-roboto text-white hover:bg-[var(--color-secondary)]/10 transition-all duration-200 active:scale-95"
+            >
+              <ArrowTopRightOnSquareIcon className="h-4 w-4 transition-transform duration-200" />
+              <span className="whitespace-nowrap">View on Autoscout </span>
             </a>
           </li>
           {allowedNetworks.length > 1 ? (

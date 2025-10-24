@@ -10,7 +10,8 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Address } from "viem";
 import { useNetworkColor } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
-import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
+
+// import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
 
 /**
  * Custom Wagmi Connect Button (watch balance + custom design)
@@ -23,9 +24,9 @@ export const RainbowKitCustomConnectButton = () => {
     <ConnectButton.Custom>
       {({ account, chain, openConnectModal, mounted }) => {
         const connected = mounted && account && chain;
-        const blockExplorerAddressLink = account
-          ? getBlockExplorerAddressLink(targetNetwork, account.address)
-          : undefined;
+        // const blockExplorerAddressLink = account
+        //   ? getBlockExplorerAddressLink(targetNetwork, account.address)
+        //   : undefined;
 
         return (
           <>
@@ -58,7 +59,7 @@ export const RainbowKitCustomConnectButton = () => {
                     address={account.address as Address}
                     displayName={account.displayName}
                     ensAvatar={account.ensAvatar}
-                    blockExplorerAddressLink={blockExplorerAddressLink}
+                    blockExplorerAddressLink={`https://eth-sepolia.blockscout.com/${account.address}`}
                   />
                   <AddressQRCodeModal address={account.address as Address} modalId="qrcode-modal" />
                   <RevealBurnerPKModal />
