@@ -65,7 +65,7 @@ export const RevealBurnerPKModal = () => {
                   currently stored <strong>temporarily</strong> in your browser.
                 </p>
                 <button
-                  className="w-full px-4 py-3 bg-red-600 hover:opacity-90 text-white font-roboto font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-red-500 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-red-600/30 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-300"
+                  className="w-full px-4 py-3 bg-red-600 hover:opacity-90 text-white font-roboto font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-red-500 hover:scale-105 active:scale-95 hover:shadow-lg hover:shadow-red-600/30 animate-in fade-in slide-in-from-bottom-2 delay-300"
                   onClick={handleCopyPK}
                   disabled={isCopiedToClipboard}
                 >

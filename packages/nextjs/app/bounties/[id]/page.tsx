@@ -155,7 +155,7 @@ export default function BountyDetailsPage() {
       : [],
     query: { refetchInterval: 8000, enabled: !!connectedAddress },
   });
-  const mySubmissionTuple = (mySubmission?.[0]?.result || ["", 0n, 0]) as [string, bigint, number];
+  const mySubmissionTuple = (mySubmission?.[0]?.result || ["", 0n, 0, 0]) as [string, bigint, number, number];
   const hasMySubmission = !!mySubmissionTuple[0];
 
   const handleSubmitReport = async () => {

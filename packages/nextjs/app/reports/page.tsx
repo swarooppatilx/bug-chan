@@ -19,7 +19,16 @@ type ReportItem = {
   subState: number;
   amount: bigint;
   stake: bigint;
+  visibility: number;
 };
+
+// Consistent badge styles
+const BADGE_BASE = "inline-flex items-center h-7 px-3 border text-xs font-roboto";
+const BADGE_PURPLE = `${BADGE_BASE} bg-purple-900/30 border-purple-700 text-purple-400`;
+const BADGE_GREEN = `${BADGE_BASE} bg-green-900/30 border-green-700 text-green-400`;
+const BADGE_RED = `${BADGE_BASE} bg-red-900/30 border-red-700 text-red-400`;
+const BADGE_GRAY = `${BADGE_BASE} bg-gray-800 border-gray-700 text-gray-400`;
+const BADGE_PRIMARY = `${BADGE_BASE} bg-black border-[var(--color-secondary)]/30 text-[var(--color-secondary)]`;
 
 export default function ReportsPage() {
   const { address: connectedAddress } = useAccount();
@@ -141,7 +150,7 @@ export default function ReportsPage() {
     if (!submissionTuples) return [];
     const out: ReportItem[] = [];
     submissionTuples.forEach((res, i) => {
-      const tuple = res?.result as [string, bigint, number] | undefined;
+      const tuple = res?.result as [string, bigint, number, number] | undefined;
       if (!tuple) return;
       const { bounty, submitter } = pairs[i];
       const owned = ownedBounties.find(b => b.addr === bounty);
@@ -149,6 +158,7 @@ export default function ReportsPage() {
       const reportCid = tuple[0];
       const stake = tuple[1];
       const subState = Number(tuple[2] || 0);
+      const visibility = Number(tuple[3] || 0);
       if (!reportCid) return;
       out.push({
         bounty,
@@ -159,6 +169,7 @@ export default function ReportsPage() {
         subState,
         amount: (committedMap.get((bounty as string).toLowerCase()) as bigint | undefined) ?? owned.amount,
         stake,
+        visibility,
       });
     });
     return out;
@@ -186,13 +197,14 @@ export default function ReportsPage() {
       infoMap.set(b.addr, { owner: b.owner, status: b.status, amount: b.amount }),
     );
     mySubmissionTuples.forEach((res, i) => {
-      const tuple = res?.result as [string, bigint, number] | undefined;
+      const tuple = res?.result as [string, bigint, number, number] | undefined;
       if (!tuple) return;
       const bounty = deployedBounties[i] as `0x${string}`;
       const reportCid = tuple[0];
       if (!reportCid) return; // no submission by this user
       const stake = tuple[1];
       const subState = Number(tuple[2] || 0);
+      const visibility = Number(tuple[3] || 0);
       const info = infoMap.get(bounty);
       if (!info) return;
       out.push({
@@ -204,6 +216,7 @@ export default function ReportsPage() {
         subState,
         amount: (committedMap.get((bounty as string).toLowerCase()) as bigint | undefined) ?? info.amount,
         stake,
+        visibility,
       });
     });
     return out;
@@ -295,23 +308,24 @@ export default function ReportsPage() {
             >
               <div className="flex justify-between items-start mb-4">
                 <div
-                  className={`px-3 py-1 text-xs font-roboto font-medium ${
+                  className={
                     r.subState === 1
-                      ? "bg-purple-900/30 text-purple-400 border border-purple-700"
+                      ? BADGE_PURPLE
                       : r.subState === 2
-                        ? "bg-green-900/30 text-green-400 border border-green-700"
+                        ? BADGE_GREEN
                         : r.subState === 3
-                          ? "bg-red-900/30 text-red-400 border border-red-700"
-                          : r.subState === 4
-                            ? "bg-gray-800 text-gray-400 border border-gray-700"
-                            : "bg-gray-800 text-gray-400 border border-gray-700"
-                  }`}
+                          ? BADGE_RED
+                          : BADGE_GRAY
+                  }
                 >
                   {SubmissionStatus[r.subState]}
                 </div>
-                <span className="px-3 py-1 bg-gray-800 border border-gray-700 text-[var(--color-secondary)] text-xs font-roboto font-medium">
-                  {formatEther(r.amount)} ETH
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={BADGE_PRIMARY}>{formatEther(r.amount)} ETH</span>
+                  <span className={r.visibility === 1 ? BADGE_GREEN : BADGE_GRAY}>
+                    {r.visibility === 1 ? "Public" : "Private"}
+                  </span>
+                </div>
               </div>
               <div className="mt-2 space-y-3 text-sm">
                 <div>

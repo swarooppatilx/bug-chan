@@ -9,3 +9,7 @@
   --font-akira: var(--font-akira);
   --font-roboto: var(--font-roboto);
 }
+
+.button {
+  cursor: pointer;
+}
