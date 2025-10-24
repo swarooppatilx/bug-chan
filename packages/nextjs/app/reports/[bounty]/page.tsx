@@ -302,19 +302,12 @@ export default function ReportDetailsPage() {
                 </button>
               )}
           </div>
-          {/* If public, fetch and show without decrypt */}
           {reportJson ? (
             <div className="space-y-4 bg-black border border-gray-800 p-6">
               {reportJson.title && (
                 <div>
                   <strong className="text-gray-400 font-roboto text-sm">Title:</strong>{" "}
                   <span className="text-white font-roboto">{reportJson.title}</span>
-                </div>
-              )}
-              {reportJson.severity && (
-                <div>
-                  <strong className="text-gray-400 font-roboto text-sm">Severity:</strong>{" "}
-                  <span className="text-white font-roboto">{reportJson.severity}</span>
                 </div>
               )}
               {reportJson.description && (
@@ -406,12 +399,6 @@ function PublicReport({ cid }: { cid: string }) {
         <div>
           <strong className="text-gray-400 font-roboto text-sm">Title:</strong>{" "}
           <span className="text-white font-roboto">{data.title}</span>
-        </div>
-      )}
-      {data.severity && (
-        <div>
-          <strong className="text-gray-400 font-roboto text-sm">Severity:</strong>{" "}
-          <span className="text-white font-roboto">{data.severity}</span>
         </div>
       )}
       {data.description && (
