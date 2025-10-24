@@ -21,6 +21,12 @@ contract Bounty {
         Refunded
     }
 
+    // Visibility for submissions
+    enum Visibility {
+        Private, // encrypted CID (off-chain decryption)
+        Public   // plaintext CID (public)
+    }
+
     address public owner;
     uint256 public amount;
     string public cid; // IPFS CID for bounty details (title, description, severity)
@@ -33,6 +39,7 @@ contract Bounty {
         string reportCid;
         uint256 stake;
         SubmissionState state;
+        Visibility visibility; // 0=Private, 1=Public
     }
 
     mapping(address => Submission) private _submissions; // per-wallet single submission
@@ -46,6 +53,7 @@ contract Bounty {
     event StakeRefunded(address indexed researcher, uint256 amount);
     event StakeSlashed(address indexed researcher, uint256 amount, address indexed receiver);
     event BountyClosed(uint256 winners, uint256 totalPaid);
+    event SubmissionVisibilityChanged(address indexed researcher, Visibility visibility, string cid);
 
     constructor(address _owner, string memory _cid, uint256 _stakeAmount, uint256 _duration) payable {
         require(msg.value > 0, "Bounty amount cannot be zero");
@@ -73,6 +81,7 @@ contract Bounty {
         subm.reportCid = _reportCid;
         subm.stake = msg.value;
         subm.state = SubmissionState.Pending;
+        subm.visibility = Visibility.Private; // default to Private
         _submitters.push(msg.sender);
 
         emit StakeDeposited(msg.sender, msg.value);
@@ -118,6 +127,8 @@ contract Bounty {
         }
         emit SubmissionRejected(_researcher);
     }
+
+
 
     /**
      * @dev Allows owner to close the bounty at any time. Distributes rewards and refunds stakes.
@@ -172,7 +183,7 @@ contract Bounty {
             amount = 0;
         }
 
-        // Refund stakes for untouched submissions, and mark as Refunded
+        // Refund stakes for untouched submissions (Pending -> Refunded)
         for (uint256 i = 0; i < _submitters.length; i++) {
             Submission storage s2 = _submissions[_submitters[i]];
             if (s2.state == SubmissionState.Pending) {
@@ -185,14 +196,30 @@ contract Bounty {
                 }
             }
         }
-
         emit BountyClosed(winners, totalPaid);
     }
 
     /**
-     * @dev Allows the bounty owner to update the minimum stake required for submissions.
-     * @param _minStake The new minimum stake in wei.
+     * @dev Update a submission's visibility and CID.
+     * Only bounty owner or the submission's researcher can call it.
+     * Researcher cannot publish while Pending or while owner is fixing.
      */
+    function setSubmissionVisibility(address _researcher, Visibility _visibility, string calldata _newCid) external {
+        Submission storage subm = _submissions[_researcher];
+        require(subm.state != SubmissionState.None, "No submission");
+
+        bool isOwner = msg.sender == owner;
+        bool isResearcher = msg.sender == _researcher;
+        require(isOwner || isResearcher, "Not allowed");
+
+        if (isResearcher) {
+            require(subm.state != SubmissionState.Pending, "Not allowed while Pending");
+        }
+
+        subm.reportCid = _newCid;
+        subm.visibility = _visibility;
+        emit SubmissionVisibilityChanged(_researcher, _visibility, _newCid);
+    }
     /**
      * @dev Returns the list of submitter addresses.
      */
@@ -203,8 +230,8 @@ contract Bounty {
     /**
      * @dev Returns a submission details for a given researcher.
      */
-    function getSubmission(address _researcher) external view returns (string memory, uint256, SubmissionState) {
+    function getSubmission(address _researcher) external view returns (string memory, uint256, SubmissionState, Visibility) {
         Submission storage s = _submissions[_researcher];
-        return (s.reportCid, s.stake, s.state);
+        return (s.reportCid, s.stake, s.state, s.visibility);
     }
 }

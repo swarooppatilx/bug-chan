@@ -6,9 +6,9 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface BountyInterface extends Interface {
-    getFunction(nameOrSignature: "acceptSubmission" | "amount" | "cid" | "close" | "closeIfExpired" | "endTime" | "getSubmission" | "getSubmitters" | "owner" | "rejectSubmission" | "stakeAmount" | "status" | "submitReport"): FunctionFragment;
+    getFunction(nameOrSignature: "acceptSubmission" | "amount" | "cid" | "close" | "closeIfExpired" | "endTime" | "fixInProgress" | "getSubmission" | "getSubmitters" | "owner" | "rejectAndPublish" | "rejectSubmission" | "setFixInProgress" | "setSubmissionVisibility" | "stakeAmount" | "status" | "submitReport"): FunctionFragment;
 
-    getEvent(nameOrSignatureOrTopic: "BountyClosed" | "FundsReleased" | "ReportSubmitted" | "StakeDeposited" | "StakeRefunded" | "StakeSlashed" | "SubmissionAccepted" | "SubmissionRejected"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "BountyClosed" | "FundsReleased" | "ReportSubmitted" | "StakeDeposited" | "StakeRefunded" | "StakeSlashed" | "SubmissionAccepted" | "SubmissionRejected" | "SubmissionVisibilityChanged"): EventFragment;
 
     encodeFunctionData(functionFragment: 'acceptSubmission', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'amount', values?: undefined): string;
@@ -16,10 +16,14 @@ encodeFunctionData(functionFragment: 'cid', values?: undefined): string;
 encodeFunctionData(functionFragment: 'close', values?: undefined): string;
 encodeFunctionData(functionFragment: 'closeIfExpired', values?: undefined): string;
 encodeFunctionData(functionFragment: 'endTime', values?: undefined): string;
+encodeFunctionData(functionFragment: 'fixInProgress', values?: undefined): string;
 encodeFunctionData(functionFragment: 'getSubmission', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'getSubmitters', values?: undefined): string;
 encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
+encodeFunctionData(functionFragment: 'rejectAndPublish', values: [AddressLike, string]): string;
 encodeFunctionData(functionFragment: 'rejectSubmission', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'setFixInProgress', values: [boolean]): string;
+encodeFunctionData(functionFragment: 'setSubmissionVisibility', values: [AddressLike, BigNumberish, string]): string;
 encodeFunctionData(functionFragment: 'stakeAmount', values?: undefined): string;
 encodeFunctionData(functionFragment: 'status', values?: undefined): string;
 encodeFunctionData(functionFragment: 'submitReport', values: [string]): string;
@@ -30,10 +34,14 @@ decodeFunctionResult(functionFragment: 'cid', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'close', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'closeIfExpired', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'endTime', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'fixInProgress', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getSubmission', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getSubmitters', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'rejectAndPublish', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'rejectSubmission', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'setFixInProgress', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'setSubmissionVisibility', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'stakeAmount', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'status', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
@@ -136,6 +144,18 @@ decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
 
   
 
+    export namespace SubmissionVisibilityChangedEvent {
+      export type InputTuple = [researcher: AddressLike, visibility: BigNumberish, cid: string];
+      export type OutputTuple = [researcher: string, visibility: bigint, cid: string];
+      export interface OutputObject {researcher: string, visibility: bigint, cid: string };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
   export interface Bounty extends BaseContract {
     
     connect(runner?: ContractRunner | null): Bounty;
@@ -218,9 +238,17 @@ decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
     
 
     
+    fixInProgress: TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >
+    
+
+    
     getSubmission: TypedContractMethod<
       [_researcher: AddressLike, ],
-      [[string, bigint, bigint]],
+      [[string, bigint, bigint, bigint]],
       'view'
     >
     
@@ -242,8 +270,32 @@ decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
     
 
     
+    rejectAndPublish: TypedContractMethod<
+      [_researcher: AddressLike, _publicCid: string, ],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
     rejectSubmission: TypedContractMethod<
       [_researcher: AddressLike, ],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    setFixInProgress: TypedContractMethod<
+      [_inProgress: boolean, ],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    setSubmissionVisibility: TypedContractMethod<
+      [_researcher: AddressLike, _visibility: BigNumberish, _newCid: string, ],
       [void],
       'nonpayable'
     >
@@ -306,9 +358,14 @@ getFunction(nameOrSignature: 'endTime'): TypedContractMethod<
       [bigint],
       'view'
     >;
+getFunction(nameOrSignature: 'fixInProgress'): TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >;
 getFunction(nameOrSignature: 'getSubmission'): TypedContractMethod<
       [_researcher: AddressLike, ],
-      [[string, bigint, bigint]],
+      [[string, bigint, bigint, bigint]],
       'view'
     >;
 getFunction(nameOrSignature: 'getSubmitters'): TypedContractMethod<
@@ -321,8 +378,23 @@ getFunction(nameOrSignature: 'owner'): TypedContractMethod<
       [string],
       'view'
     >;
+getFunction(nameOrSignature: 'rejectAndPublish'): TypedContractMethod<
+      [_researcher: AddressLike, _publicCid: string, ],
+      [void],
+      'nonpayable'
+    >;
 getFunction(nameOrSignature: 'rejectSubmission'): TypedContractMethod<
       [_researcher: AddressLike, ],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'setFixInProgress'): TypedContractMethod<
+      [_inProgress: boolean, ],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'setSubmissionVisibility'): TypedContractMethod<
+      [_researcher: AddressLike, _visibility: BigNumberish, _newCid: string, ],
       [void],
       'nonpayable'
     >;
@@ -350,6 +422,7 @@ getEvent(key: 'StakeRefunded'): TypedContractEvent<StakeRefundedEvent.InputTuple
 getEvent(key: 'StakeSlashed'): TypedContractEvent<StakeSlashedEvent.InputTuple, StakeSlashedEvent.OutputTuple, StakeSlashedEvent.OutputObject>;
 getEvent(key: 'SubmissionAccepted'): TypedContractEvent<SubmissionAcceptedEvent.InputTuple, SubmissionAcceptedEvent.OutputTuple, SubmissionAcceptedEvent.OutputObject>;
 getEvent(key: 'SubmissionRejected'): TypedContractEvent<SubmissionRejectedEvent.InputTuple, SubmissionRejectedEvent.OutputTuple, SubmissionRejectedEvent.OutputObject>;
+getEvent(key: 'SubmissionVisibilityChanged'): TypedContractEvent<SubmissionVisibilityChangedEvent.InputTuple, SubmissionVisibilityChangedEvent.OutputTuple, SubmissionVisibilityChangedEvent.OutputObject>;
 
     filters: {
       
@@ -383,6 +456,10 @@ getEvent(key: 'SubmissionRejected'): TypedContractEvent<SubmissionRejectedEvent.
 
       'SubmissionRejected(address)': TypedContractEvent<SubmissionRejectedEvent.InputTuple, SubmissionRejectedEvent.OutputTuple, SubmissionRejectedEvent.OutputObject>;
       SubmissionRejected: TypedContractEvent<SubmissionRejectedEvent.InputTuple, SubmissionRejectedEvent.OutputTuple, SubmissionRejectedEvent.OutputObject>;
+    
+
+      'SubmissionVisibilityChanged(address,uint8,string)': TypedContractEvent<SubmissionVisibilityChangedEvent.InputTuple, SubmissionVisibilityChangedEvent.OutputTuple, SubmissionVisibilityChangedEvent.OutputObject>;
+      SubmissionVisibilityChanged: TypedContractEvent<SubmissionVisibilityChangedEvent.InputTuple, SubmissionVisibilityChangedEvent.OutputTuple, SubmissionVisibilityChangedEvent.OutputObject>;
     
     };
   }

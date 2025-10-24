@@ -161,6 +161,26 @@ export const bountyABI = [
     type: "event",
   },
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "researcher",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "enum Bounty.Visibility",
+        name: "visibility",
+        type: "uint8",
+      },
+      { indexed: false, internalType: "string", name: "cid", type: "string" },
+    ],
+    name: "SubmissionVisibilityChanged",
+    type: "event",
+  },
+  {
     inputs: [{ internalType: "address", name: "_researcher", type: "address" }],
     name: "acceptSubmission",
     outputs: [],
@@ -203,12 +223,20 @@ export const bountyABI = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "fixInProgress",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "address", name: "_researcher", type: "address" }],
     name: "getSubmission",
     outputs: [
       { internalType: "string", name: "", type: "string" },
       { internalType: "uint256", name: "", type: "uint256" },
       { internalType: "enum Bounty.SubmissionState", name: "", type: "uint8" },
+      { internalType: "enum Bounty.Visibility", name: "", type: "uint8" },
     ],
     stateMutability: "view",
     type: "function",
@@ -228,8 +256,40 @@ export const bountyABI = [
     type: "function",
   },
   {
+    inputs: [
+      { internalType: "address", name: "_researcher", type: "address" },
+      { internalType: "string", name: "_publicCid", type: "string" },
+    ],
+    name: "rejectAndPublish",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "address", name: "_researcher", type: "address" }],
     name: "rejectSubmission",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "bool", name: "_inProgress", type: "bool" }],
+    name: "setFixInProgress",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_researcher", type: "address" },
+      {
+        internalType: "enum Bounty.Visibility",
+        name: "_visibility",
+        type: "uint8",
+      },
+      { internalType: "string", name: "_newCid", type: "string" },
+    ],
+    name: "setSubmissionVisibility",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
