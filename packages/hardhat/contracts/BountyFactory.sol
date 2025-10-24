@@ -9,7 +9,6 @@ import "./Bounty.sol";
  */
 contract BountyFactory {
     address[] public deployedBounties;
-    address public immutable platformTreasury;
 
     event BountyCreated(
         address indexed bountyAddress,
@@ -20,10 +19,7 @@ contract BountyFactory {
         uint256 duration
     );
 
-    constructor(address _platformTreasury) {
-        require(_platformTreasury != address(0), "Treasury required");
-        platformTreasury = _platformTreasury;
-    }
+    constructor() {}
 
     /**
      * @dev Creates and deploys a new Bounty contract, funding it with the sent ETH.
@@ -38,7 +34,7 @@ contract BountyFactory {
         uint256 _duration
     ) external payable returns (address) {
         // Forward ETH to new bounty as reward pool
-        Bounty newBounty = new Bounty{ value: msg.value }(_owner, _cid, _stakeAmount, _duration, platformTreasury);
+        Bounty newBounty = new Bounty{ value: msg.value }(_owner, _cid, _stakeAmount, _duration);
 
         address newBountyAddress = address(newBounty);
         deployedBounties.push(newBountyAddress);

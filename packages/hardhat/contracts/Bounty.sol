@@ -27,7 +27,7 @@ contract Bounty {
     Status public status;
     uint256 public immutable stakeAmount; // fixed stake decided by the bounty creator, immutable
     uint256 public immutable endTime; // timestamp when bounty closes automatically
-    address public immutable platformTreasury; // treasury to receive winners' stake and slashed stakes
+    // No platform treasury. All monetary flows remain between the bounty contract and researchers.
 
     struct Submission {
         string reportCid;
@@ -47,24 +47,16 @@ contract Bounty {
     event StakeSlashed(address indexed researcher, uint256 amount, address indexed receiver);
     event BountyClosed(uint256 winners, uint256 totalPaid);
 
-    constructor(
-        address _owner,
-        string memory _cid,
-        uint256 _stakeAmount,
-        uint256 _duration,
-        address _platformTreasury
-    ) payable {
+    constructor(address _owner, string memory _cid, uint256 _stakeAmount, uint256 _duration) payable {
         require(msg.value > 0, "Bounty amount cannot be zero");
         require(_stakeAmount > 0, "Stake amount must be > 0");
         require(_duration > 0, "Duration must be > 0");
-        require(_platformTreasury != address(0), "Treasury required");
         owner = _owner;
         cid = _cid;
         amount = msg.value;
         status = Status.Open;
         stakeAmount = _stakeAmount;
         endTime = block.timestamp + _duration;
-        platformTreasury = _platformTreasury;
     }
 
     /**
@@ -96,13 +88,13 @@ contract Bounty {
         Submission storage subm = _submissions[_researcher];
         require(subm.state == SubmissionState.Pending, "No pending submission from this address");
 
-        // Mark accepted and move stake to treasury immediately
+        // Mark accepted and slash stake back to bounty creator (anti-spam)
         subm.state = SubmissionState.Accepted;
         uint256 _stake = subm.stake;
         subm.stake = 0;
         if (_stake > 0) {
-            payable(platformTreasury).transfer(_stake);
-            emit StakeSlashed(_researcher, _stake, platformTreasury);
+            payable(owner).transfer(_stake);
+            emit StakeSlashed(_researcher, _stake, owner);
         }
         emit SubmissionAccepted(_researcher);
     }
@@ -119,10 +111,10 @@ contract Bounty {
         subm.state = SubmissionState.Rejected;
         uint256 _stake = subm.stake;
         subm.stake = 0;
-        // Slash the researcher's stake and transfer to treasury as anti-spam penalty
+        // Slash the researcher's stake back to bounty creator (anti-spam)
         if (_stake > 0) {
-            payable(platformTreasury).transfer(_stake);
-            emit StakeSlashed(_researcher, _stake, platformTreasury);
+            payable(owner).transfer(_stake);
+            emit StakeSlashed(_researcher, _stake, owner);
         }
         emit SubmissionRejected(_researcher);
     }
@@ -169,9 +161,14 @@ contract Bounty {
                 }
             }
             if (remainder > 0) {
-                // send dust to treasury to avoid stuck funds
-                payable(platformTreasury).transfer(remainder);
+                // send dust back to creator
+                payable(owner).transfer(remainder);
+                // not counted as totalPaid (only winners' payouts)
             }
+            amount = 0;
+        } else if (winners == 0 && amount > 0) {
+            // No winners: return bounty to creator
+            payable(owner).transfer(amount);
             amount = 0;
         }
 

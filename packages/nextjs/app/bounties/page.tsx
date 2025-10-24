@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { formatEther, parseAbiItem } from "viem";
-import { useAccount, useChainId, usePublicClient } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { useReadContracts } from "wagmi";
 import { BugAntIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
 import deployedContracts from "~~/contracts/deployedContracts";
-import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
+import { useScaffoldReadContract, useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 type BountyCardProps = {
   id: string;
@@ -121,8 +121,8 @@ const BountyCard = ({
 
 export default function BountiesPage() {
   const { address: connectedAddress } = useAccount();
-  const chainId = useChainId();
-  const publicClient = usePublicClient();
+  const { targetNetwork } = useTargetNetwork();
+  const publicClient = usePublicClient({ chainId: targetNetwork.id });
   const [committedMap, setCommittedMap] = useState<Map<string, bigint>>(new Map());
 
   const { data: deployedBounties, isLoading: isLoadingAddresses } = useScaffoldReadContract({
@@ -135,17 +135,26 @@ export default function BountiesPage() {
     let cancelled = false;
     const loadCommitted = async () => {
       try {
-        const chainDecl = (deployedContracts as any)[chainId];
+        const chainDecl = (deployedContracts as any)[targetNetwork.id];
         const factoryDecl = chainDecl?.BountyFactory;
         const factoryAddress = factoryDecl?.address as `0x${string}` | undefined;
         if (!publicClient || !factoryAddress) return;
         const createdEvent = parseAbiItem(
           "event BountyCreated(address indexed bountyAddress, address indexed owner, string cid, uint256 amount, uint256 stakeAmount, uint256 duration)",
         );
-        const logs = await publicClient.getLogs({ address: factoryAddress, event: createdEvent, fromBlock: 0n });
+        const fromBlockFactory: bigint | undefined =
+          typeof factoryDecl?.deployedOnBlock === "number" && factoryDecl.deployedOnBlock > 0
+            ? BigInt(factoryDecl.deployedOnBlock)
+            : 0n;
+        const logs = await publicClient.getLogs({
+          address: factoryAddress,
+          event: createdEvent,
+          fromBlock: fromBlockFactory,
+        });
         const cmap = new Map<string, bigint>();
         for (const log of logs as any[]) {
-          cmap.set(log.args?.bountyAddress as string, (log.args?.amount as bigint) ?? 0n);
+          const baddr = (log.args?.bountyAddress as string) || "";
+          if (baddr) cmap.set(baddr.toLowerCase(), (log.args?.amount as bigint) ?? 0n);
         }
         if (!cancelled) {
           setCommittedMap(cmap);
@@ -158,7 +167,7 @@ export default function BountiesPage() {
     return () => {
       cancelled = true;
     };
-  }, [publicClient, chainId]);
+  }, [publicClient, targetNetwork.id]);
 
   const bountyContractsToRead = useMemo(() => {
     return (deployedBounties || []).flatMap(address => [
@@ -199,7 +208,7 @@ export default function BountiesPage() {
         id: deployedBounties[bountyIndex] as string,
         owner: bountiesOnChainData[i]?.result as string,
         amount:
-          (committedMap.get(deployedBounties[bountyIndex] as string) as bigint | undefined) ??
+          (committedMap.get(((deployedBounties[bountyIndex] as string) || "").toLowerCase()) as bigint | undefined) ??
           ((bountiesOnChainData[i + 1]?.result as bigint) || 0n),
         status: bountiesOnChainData[i + 2]?.result as number,
         cid: bountiesOnChainData[i + 3]?.result as string,

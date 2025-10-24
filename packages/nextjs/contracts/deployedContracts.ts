@@ -7,16 +7,10 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     BountyFactory: {
-      address: "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
+      address: "0x5fbdb2315678afecb367f032d93f642f64180aa3",
       abi: [
         {
-          inputs: [
-            {
-              internalType: "address",
-              name: "_platformTreasury",
-              type: "address",
-            },
-          ],
+          inputs: [],
           stateMutability: "nonpayable",
           type: "constructor",
         },
@@ -129,36 +123,17 @@ const deployedContracts = {
           stateMutability: "view",
           type: "function",
         },
-        {
-          inputs: [],
-          name: "platformTreasury",
-          outputs: [
-            {
-              internalType: "address",
-              name: "",
-              type: "address",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 5,
+      deployedOnBlock: 1,
     },
   },
   11155111: {
     BountyFactory: {
-      address: "0xbe6a17d54830ab4a22e80328eb32b99fe3419296",
+      address: "0x9b5d18560a954315835c78c732c709b7f9dfa33f",
       abi: [
         {
-          inputs: [
-            {
-              internalType: "address",
-              name: "_platformTreasury",
-              type: "address",
-            },
-          ],
+          inputs: [],
           stateMutability: "nonpayable",
           type: "constructor",
         },
@@ -271,22 +246,9 @@ const deployedContracts = {
           stateMutability: "view",
           type: "function",
         },
-        {
-          inputs: [],
-          name: "platformTreasury",
-          outputs: [
-            {
-              internalType: "address",
-              name: "",
-              type: "address",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 9471949,
+      deployedOnBlock: 9479616,
     },
   },
 } as const;

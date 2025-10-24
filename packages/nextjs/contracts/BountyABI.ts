@@ -10,7 +10,6 @@ export const bountyABI = [
       { internalType: "string", name: "_cid", type: "string" },
       { internalType: "uint256", name: "_stakeAmount", type: "uint256" },
       { internalType: "uint256", name: "_duration", type: "uint256" },
-      { internalType: "address", name: "_platformTreasury", type: "address" },
     ],
     stateMutability: "payable",
     type: "constructor",
@@ -224,13 +223,6 @@ export const bountyABI = [
   {
     inputs: [],
     name: "owner",
-    outputs: [{ internalType: "address", name: "", type: "address" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "platformTreasury",
     outputs: [{ internalType: "address", name: "", type: "address" }],
     stateMutability: "view",
     type: "function",

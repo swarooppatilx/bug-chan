@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatEther } from "viem";
 import { parseAbiItem } from "viem";
-import { useAccount, useChainId, usePublicClient, useReadContracts } from "wagmi";
+import { useAccount, usePublicClient, useReadContracts } from "wagmi";
 import { ChartBarIcon, TrophyIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { bountyABI } from "~~/contracts/BountyABI";
 import deployedContracts from "~~/contracts/deployedContracts";
-import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
+import { useScaffoldReadContract, useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 type ResearcherRow = {
   researcher: `0x${string}`;
@@ -29,6 +29,14 @@ export default function LeaderboardPage() {
   const PAGE_SIZE = 10;
   const [pageResearchers, setPageResearchers] = useState(1);
   const [pageOrgs, setPageOrgs] = useState(1);
+  // Debug flag (enable with localStorage.DEBUG_LEADERBOARD = "1" or NEXT_PUBLIC_DEBUG_LEADERBOARD=1)
+  const debugEnabled = true;
+  const dlog = useCallback(
+    (...args: any[]) => {
+      if (debugEnabled) console.debug("[Leaderboard]", ...args);
+    },
+    [debugEnabled],
+  );
 
   // Reset pagination when switching tabs
   useEffect(() => {
@@ -98,8 +106,9 @@ export default function LeaderboardPage() {
   });
 
   // Historical logs: BountyCreated (factory) and BountyClosed (per bounty)
-  const chainId = useChainId();
-  const publicClient = usePublicClient();
+  // Always use the app's target network for event queries to keep it consistent with useScaffoldReadContract
+  const { targetNetwork } = useTargetNetwork();
+  const publicClient = usePublicClient({ chainId: targetNetwork.id });
   const [createdMap, setCreatedMap] = useState<
     Map<string, { owner: `0x${string}`; amount: bigint; stakeAmount?: bigint; duration?: bigint }>
   >(new Map());
@@ -109,7 +118,7 @@ export default function LeaderboardPage() {
     let cancelled = false;
     const loadLogs = async () => {
       try {
-        const chainDecl = (deployedContracts as any)[chainId];
+        const chainDecl = (deployedContracts as any)[targetNetwork.id];
         const factoryDecl = chainDecl?.BountyFactory;
         const factoryAddress = factoryDecl?.address as `0x${string}` | undefined;
         const factoryAbi = factoryDecl?.abi;
@@ -119,19 +128,39 @@ export default function LeaderboardPage() {
         const createdEvent = parseAbiItem(
           "event BountyCreated(address indexed bountyAddress, address indexed owner, string cid, uint256 amount, uint256 stakeAmount, uint256 duration)",
         );
-        const createdLogs = await publicClient.getLogs({ address: factoryAddress, event: createdEvent, fromBlock: 0n });
+        const fromBlockFactory: bigint | undefined =
+          typeof factoryDecl?.deployedOnBlock === "number" && factoryDecl.deployedOnBlock > 0
+            ? BigInt(factoryDecl.deployedOnBlock)
+            : 0n;
+        const createdLogs = await publicClient.getLogs({
+          address: factoryAddress,
+          event: createdEvent,
+          fromBlock: fromBlockFactory,
+        });
+        dlog("BountyCreated logs:", createdLogs.length, {
+          fromBlock: fromBlockFactory?.toString?.(),
+          factory: factoryAddress,
+          sampleArgs: (createdLogs as any[])?.[0]?.args,
+        });
         const cMap = new Map<
           string,
           { owner: `0x${string}`; amount: bigint; stakeAmount?: bigint; duration?: bigint }
         >();
         for (const log of createdLogs as any[]) {
-          const bountyAddr = log.args?.bountyAddress as `0x${string}`;
-          const owner = log.args?.owner as `0x${string}`;
+          const bountyAddr = (log.args?.bountyAddress as `0x${string}`) || undefined;
+          const owner = (log.args?.owner as `0x${string}`) || "0x0000000000000000000000000000000000000000";
           const amount = (log.args?.amount as bigint) ?? 0n;
           const stakeAmount = log.args?.stakeAmount as bigint | undefined;
           const duration = log.args?.duration as bigint | undefined;
-          if (bountyAddr) cMap.set(bountyAddr, { owner, amount, stakeAmount, duration });
+          if (bountyAddr)
+            cMap.set(bountyAddr.toLowerCase(), {
+              owner: owner.toLowerCase() as `0x${string}`,
+              amount,
+              stakeAmount,
+              duration,
+            });
         }
+        dlog("createdMap size:", cMap.size, "sample:", Array.from(cMap.entries())[0]);
 
         // BountyClosed logs per bounty (totalPaid and winners)
         const bounties = (deployedBounties || []) as `0x${string}`[];
@@ -139,11 +168,15 @@ export default function LeaderboardPage() {
         const closedEntries = await Promise.all(
           bounties.map(async addr => {
             try {
-              const logs = await publicClient.getLogs({ address: addr, event: closedEvent, fromBlock: 0n });
+              const logs = await publicClient.getLogs({
+                address: addr as `0x${string}`,
+                event: closedEvent,
+                fromBlock: fromBlockFactory,
+              });
               const last = (logs as any[]).at(-1);
               if (!last) return undefined;
               return [
-                addr,
+                (addr as string).toLowerCase(),
                 { winners: (last.args?.winners as bigint) ?? 0n, totalPaid: (last.args?.totalPaid as bigint) ?? 0n },
               ] as const;
             } catch {
@@ -153,6 +186,7 @@ export default function LeaderboardPage() {
         );
         const clMap = new Map<string, { winners: bigint; totalPaid: bigint }>();
         for (const entry of closedEntries) if (entry) clMap.set(entry[0], entry[1]);
+        dlog("closedMap size:", clMap.size, "sample:", Array.from(clMap.entries())[0]);
 
         if (!cancelled) {
           setCreatedMap(cMap);
@@ -169,7 +203,7 @@ export default function LeaderboardPage() {
       cancelled = true;
       clearInterval(id);
     };
-  }, [publicClient, chainId, deployedBounties]);
+  }, [publicClient, targetNetwork.id, deployedBounties, dlog]);
 
   // Aggregate leaderboards from on-chain snapshot
   const { researcherRows, orgRows } = useMemo(() => {
@@ -185,13 +219,16 @@ export default function LeaderboardPage() {
       const idx = i / 3;
       const st = (statusAmountData[i]?.result as number | undefined) ?? 0;
       const bountyAddr = deployedBounties[idx] as `0x${string}`;
-      const committed = createdMap.get(bountyAddr as string)?.amount ?? 0n;
+      const bountyAddrKey = (bountyAddr as string).toLowerCase();
+      const committed = createdMap.get(bountyAddrKey)?.amount ?? 0n;
       const liveAmt = (statusAmountData[i + 1]?.result as bigint | undefined) ?? 0n;
       const amt = committed > 0n ? committed : liveAmt;
-      const ownerFromEvent = createdMap.get(bountyAddr as string)?.owner;
+      const ownerFromEvent = createdMap.get(bountyAddrKey)?.owner;
       const ownerLive = statusAmountData[i + 2]?.result as string | undefined;
-      const ownerAddr = (ownerFromEvent || ownerLive || "0x0000000000000000000000000000000000000000") as `0x${string}`;
-      bountyInfo.set(deployedBounties[idx] as string, {
+      const ownerAddr = (
+        (ownerFromEvent || ownerLive || "0x0000000000000000000000000000000000000000") as string
+      ).toLowerCase() as `0x${string}`;
+      bountyInfo.set(bountyAddrKey, {
         status: st,
         amount: amt,
         owner: ownerAddr,
@@ -207,19 +244,21 @@ export default function LeaderboardPage() {
       const tuple = res?.result as [string, bigint, number] | undefined;
       if (!tuple) return;
       const { bounty, submitter } = pairs[i];
-      const info = bountyInfo.get(bounty);
+      const bKey = (bounty as string).toLowerCase();
+      const info = bountyInfo.get(bKey);
       if (!info) return;
       const [cid, , state] = tuple; // state: 1 Pending, 2 Accepted, 3 Rejected, 4 Refunded
       if (!cid) return;
 
       // Count every submission from this researcher
-      submissionCounts.set(submitter, (submissionCounts.get(submitter) || 0) + 1);
+      const submitterKey = (submitter as string).toLowerCase();
+      submissionCounts.set(submitterKey, (submissionCounts.get(submitterKey) || 0) + 1);
 
       // Track accepted per bounty to compute shares
       if (state === 2) {
-        winnersNow.set(bounty, (winnersNow.get(bounty) || 0) + 1);
-        if (!acceptedByBounty.has(bounty)) acceptedByBounty.set(bounty, new Set<string>());
-        acceptedByBounty.get(bounty)!.add(submitter);
+        winnersNow.set(bKey, (winnersNow.get(bKey) || 0) + 1);
+        if (!acceptedByBounty.has(bKey)) acceptedByBounty.set(bKey, new Set<string>());
+        acceptedByBounty.get(bKey)!.add((submitter as string).toLowerCase());
       }
     });
 
@@ -251,7 +290,7 @@ export default function LeaderboardPage() {
 
     const researcherRows: ResearcherRow[] = Array.from(allResearchers.values())
       .map(researcher => ({
-        researcher: researcher as `0x${string}`,
+        researcher: (researcher as string).toLowerCase() as `0x${string}`,
         rewardsWon: rewardsTotals.get(researcher) || 0n,
         submissions: submissionCounts.get(researcher) || 0,
       }))
@@ -273,10 +312,11 @@ export default function LeaderboardPage() {
     const orgCommitted = new Map<string, bigint>();
     const orgPaid = new Map<string, bigint>();
     createdMap.forEach((c, addr) => {
-      const owner = c.owner as string;
+      const owner = (c.owner as string).toLowerCase();
+      const addrKey = (addr as string).toLowerCase();
       orgBounties.set(owner, (orgBounties.get(owner) || 0) + 1);
       orgCommitted.set(owner, (orgCommitted.get(owner) || 0n) + (c.amount || 0n));
-      const closed = closedMap.get(addr);
+      const closed = closedMap.get(addrKey);
       if (closed) orgPaid.set(owner, (orgPaid.get(owner) || 0n) + (closed.totalPaid || 0n));
     });
 
@@ -304,8 +344,12 @@ export default function LeaderboardPage() {
       )
       .slice(0, 100);
 
+    dlog("researcherRows:", researcherRows.length, "orgRows:", orgRows.length, {
+      sampleResearcher: researcherRows[0],
+      sampleOrg: orgRows[0],
+    });
     return { researcherRows, orgRows };
-  }, [deployedBounties, statusAmountData, subsTuples, pairs, createdMap, closedMap]);
+  }, [deployedBounties, statusAmountData, subsTuples, pairs, createdMap, closedMap, dlog]);
 
   // Show all entries (before/after close), even if rewards are 0
   const filteredResearchers = useMemo(() => researcherRows || [], [researcherRows]);

@@ -6,7 +6,7 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface BountyInterface extends Interface {
-    getFunction(nameOrSignature: "acceptSubmission" | "amount" | "cid" | "close" | "closeIfExpired" | "endTime" | "getSubmission" | "getSubmitters" | "owner" | "platformTreasury" | "rejectSubmission" | "stakeAmount" | "status" | "submitReport"): FunctionFragment;
+    getFunction(nameOrSignature: "acceptSubmission" | "amount" | "cid" | "close" | "closeIfExpired" | "endTime" | "getSubmission" | "getSubmitters" | "owner" | "rejectSubmission" | "stakeAmount" | "status" | "submitReport"): FunctionFragment;
 
     getEvent(nameOrSignatureOrTopic: "BountyClosed" | "FundsReleased" | "ReportSubmitted" | "StakeDeposited" | "StakeRefunded" | "StakeSlashed" | "SubmissionAccepted" | "SubmissionRejected"): EventFragment;
 
@@ -19,7 +19,6 @@ encodeFunctionData(functionFragment: 'endTime', values?: undefined): string;
 encodeFunctionData(functionFragment: 'getSubmission', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'getSubmitters', values?: undefined): string;
 encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
-encodeFunctionData(functionFragment: 'platformTreasury', values?: undefined): string;
 encodeFunctionData(functionFragment: 'rejectSubmission', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'stakeAmount', values?: undefined): string;
 encodeFunctionData(functionFragment: 'status', values?: undefined): string;
@@ -34,7 +33,6 @@ decodeFunctionResult(functionFragment: 'endTime', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getSubmission', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getSubmitters', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'platformTreasury', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'rejectSubmission', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'stakeAmount', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'status', data: BytesLike): Result;
@@ -244,14 +242,6 @@ decodeFunctionResult(functionFragment: 'submitReport', data: BytesLike): Result;
     
 
     
-    platformTreasury: TypedContractMethod<
-      [],
-      [string],
-      'view'
-    >
-    
-
-    
     rejectSubmission: TypedContractMethod<
       [_researcher: AddressLike, ],
       [void],
@@ -327,11 +317,6 @@ getFunction(nameOrSignature: 'getSubmitters'): TypedContractMethod<
       'view'
     >;
 getFunction(nameOrSignature: 'owner'): TypedContractMethod<
-      [],
-      [string],
-      'view'
-    >;
-getFunction(nameOrSignature: 'platformTreasury'): TypedContractMethod<
       [],
       [string],
       'view'

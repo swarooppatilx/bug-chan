@@ -7,7 +7,6 @@ import lighthouse from "@lighthouse-web3/sdk";
 import { formatEther, parseAbiItem, parseEther } from "viem";
 import {
   useAccount,
-  useChainId,
   usePublicClient,
   useReadContracts,
   useSignMessage,
@@ -18,6 +17,7 @@ import { BugAntIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
 import deployedContracts from "~~/contracts/deployedContracts";
+import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 
 export default function BountyDetailsPage() {
@@ -56,23 +56,27 @@ export default function BountyDetailsPage() {
 
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
-  const chainId = useChainId();
-  const publicClient = usePublicClient();
+  const { targetNetwork } = useTargetNetwork();
+  const publicClient = usePublicClient({ chainId: targetNetwork.id });
   useEffect(() => {
     const loadCommitted = async () => {
       try {
-        const chainDecl = (deployedContracts as any)[chainId];
+        const chainDecl = (deployedContracts as any)[targetNetwork.id];
         const factoryDecl = chainDecl?.BountyFactory;
         const factoryAddress = factoryDecl?.address as `0x${string}` | undefined;
         if (!publicClient || !factoryAddress) return;
         const createdEvent = parseAbiItem(
           "event BountyCreated(address indexed bountyAddress, address indexed owner, string cid, uint256 amount, uint256 stakeAmount, uint256 duration)",
         );
+        const fromBlockFactory: bigint | undefined =
+          typeof factoryDecl?.deployedOnBlock === "number" && factoryDecl.deployedOnBlock > 0
+            ? BigInt(factoryDecl.deployedOnBlock)
+            : 0n;
         const logs = await publicClient.getLogs({
           address: factoryAddress,
           event: createdEvent,
           args: { bountyAddress },
-          fromBlock: 0n,
+          fromBlock: fromBlockFactory,
         });
         const last = (logs as any[]).at(-1);
         const amt = (last?.args?.amount as bigint) ?? 0n;
@@ -82,7 +86,7 @@ export default function BountyDetailsPage() {
       }
     };
     loadCommitted();
-  }, [publicClient, chainId, bountyAddress]);
+  }, [publicClient, targetNetwork.id, bountyAddress]);
 
   useEffect(() => {
     if (isConfirmed) {
