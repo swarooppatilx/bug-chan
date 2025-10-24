@@ -6,19 +6,17 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface BountyFactoryInterface extends Interface {
-    getFunction(nameOrSignature: "createBounty" | "deployedBounties" | "getDeployedBounties" | "platformTreasury"): FunctionFragment;
+    getFunction(nameOrSignature: "createBounty" | "deployedBounties" | "getDeployedBounties"): FunctionFragment;
 
     getEvent(nameOrSignatureOrTopic: "BountyCreated"): EventFragment;
 
     encodeFunctionData(functionFragment: 'createBounty', values: [AddressLike, string, BigNumberish, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'deployedBounties', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'getDeployedBounties', values?: undefined): string;
-encodeFunctionData(functionFragment: 'platformTreasury', values?: undefined): string;
 
     decodeFunctionResult(functionFragment: 'createBounty', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'deployedBounties', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getDeployedBounties', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'platformTreasury', data: BytesLike): Result;
   }
 
   
@@ -91,14 +89,6 @@ decodeFunctionResult(functionFragment: 'platformTreasury', data: BytesLike): Res
     >
     
 
-    
-    platformTreasury: TypedContractMethod<
-      [],
-      [string],
-      'view'
-    >
-    
-
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
@@ -115,11 +105,6 @@ getFunction(nameOrSignature: 'deployedBounties'): TypedContractMethod<
 getFunction(nameOrSignature: 'getDeployedBounties'): TypedContractMethod<
       [],
       [string[]],
-      'view'
-    >;
-getFunction(nameOrSignature: 'platformTreasury'): TypedContractMethod<
-      [],
-      [string],
       'view'
     >;
 
