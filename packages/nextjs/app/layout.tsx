@@ -1,5 +1,6 @@
 import { Roboto } from "next/font/google";
 import localFont from "next/font/local";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "@rainbow-me/rainbowkit/styles.css";
 import { ScaffoldEthAppWithProviders } from "~~/components/ScaffoldEthAppWithProviders";
 import { ThemeProvider } from "~~/components/ThemeProvider";
@@ -33,6 +34,7 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
           <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>
         </ThemeProvider>
       </body>
+      <GoogleAnalytics gaId="G-N9HZQMDF0N" />
     </html>
   );
 };

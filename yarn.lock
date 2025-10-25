@@ -2140,6 +2140,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@next/third-parties@npm:^16.0.0":
+  version: 16.0.0
+  resolution: "@next/third-parties@npm:16.0.0"
+  dependencies:
+    third-party-capital: 1.0.20
+  peerDependencies:
+    next: ^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0-beta.0
+    react: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
+  checksum: 8a50322beddb137a25c6b70ae4f85481efc8f1de7bc139cf12ed120c9a4f8392c264243ee3f6b78257cdf92df8fe8589ff5236ff8aff38163234c2bff7dd7c74
+  languageName: node
+  linkType: hard
+
 "@noble/ciphers@npm:1.2.1":
   version: 1.2.1
   resolution: "@noble/ciphers@npm:1.2.1"
@@ -3554,6 +3566,7 @@ __metadata:
     "@heroicons/react": ~2.1.5
     "@lighthouse-web3/kavach": ^0.2.1
     "@lighthouse-web3/sdk": ^0.4.3
+    "@next/third-parties": ^16.0.0
     "@pythnetwork/hermes-client": ^2.0.0
     "@rainbow-me/rainbowkit": 2.2.8
     "@tailwindcss/postcss": 4.0.15
@@ -15157,6 +15170,13 @@ __metadata:
   version: 0.2.0
   resolution: "text-table@npm:0.2.0"
   checksum: b6937a38c80c7f84d9c11dd75e49d5c44f71d95e810a3250bd1f1797fc7117c57698204adf676b71497acc205d769d65c16ae8fa10afad832ae1322630aef10a
+  languageName: node
+  linkType: hard
+
+"third-party-capital@npm:1.0.20":
+  version: 1.0.20
+  resolution: "third-party-capital@npm:1.0.20"
+  checksum: ef5eae00bdb82b538b9f628a011fc294cd6f4bafdbb46d88f3d1a72e8c3b9e2cc2a547fdb62bc16bdd847e9da3dac2df676b154c64914f6c90ea15aac6ce0a6a
   languageName: node
   linkType: hard
 
