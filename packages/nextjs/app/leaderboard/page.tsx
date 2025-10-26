@@ -417,13 +417,13 @@ export default function LeaderboardPage() {
         {/* Tabs */}
         <div className="mb-6 flex gap-2">
           <button
-            className={`px-4 py-2 border ${tab === "researchers" ? "bg-[var(--color-secondary)] text-black border-[var(--color-secondary)]" : "bg-black/60 text-white border-[var(--color-secondary)]/40"}`}
+            className={`px-4 py-2 border cursor-pointer ${tab === "researchers" ? "bg-[var(--color-secondary)] text-black border-[var(--color-secondary)]" : "bg-black/60 text-white border-[var(--color-secondary)]/40"}`}
             onClick={() => setTab("researchers")}
           >
             Researchers
           </button>
           <button
-            className={`px-4 py-2 border ${tab === "orgs" ? "bg-[var(--color-secondary)] text-black border-[var(--color-secondary)]" : "bg-black/60 text-white border-[var(--color-secondary)]/40"}`}
+            className={`px-4 py-2 border cursor-pointer ${tab === "orgs" ? "bg-[var(--color-secondary)] text-black border-[var(--color-secondary)]" : "bg-black/60 text-white border-[var(--color-secondary)]/40"}`}
             onClick={() => setTab("orgs")}
           >
             Organisations

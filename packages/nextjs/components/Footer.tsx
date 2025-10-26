@@ -1,6 +1,5 @@
 import React from "react";
 import Image from "next/image";
-import { CodeBracketIcon } from "@heroicons/react/24/outline";
 
 /**
  * Site footer
@@ -29,7 +28,7 @@ export const Footer = () => {
                 rel="noreferrer"
                 className="flex items-center gap-2 hover:text-[var(--color-secondary)] transition-colors duration-300"
               >
-                <CodeBracketIcon className="h-4 w-4" />
+                <Image src={"/icons/github-mark-white.svg"} alt="github logo" height={15} width={15} />
                 <span>GitHub</span>
               </a>
               <span className="text-gray-600">·</span>

@@ -218,7 +218,7 @@ export default function CreateBountyPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full px-8 py-4 bg-[var(--color-secondary)] hover:opacity-90 text-black font-roboto font-medium text-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-8 py-4 cursor-pointer  bg-[var(--color-secondary)] hover:opacity-90 text-black font-roboto font-medium text-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <div className="h-5 w-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
