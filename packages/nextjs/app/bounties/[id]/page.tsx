@@ -18,6 +18,7 @@ import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
 import deployedContracts from "~~/contracts/deployedContracts";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
+import { formatEthShort } from "~~/utils/format";
 import { notification } from "~~/utils/scaffold-eth";
 
 export default function BountyDetailsPage() {
@@ -244,6 +245,14 @@ export default function BountyDetailsPage() {
   const isOwner = connectedAddress === owner?.result;
   const currentStatus = status?.result !== undefined ? BountyStatus[status.result] : "Loading...";
 
+  // Compute display reward
+  const rewardWei = (
+    committedAmount && committedAmount > 0n ? committedAmount : (amount?.result as bigint) || 0n
+  ) as bigint;
+  const fullEth = formatEther(rewardWei);
+  const shortEth = formatEthShort(rewardWei, 6);
+  const isTrimmed = (fullEth.split(".")[1]?.length || 0) > 6;
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="bg-gray-900 border border-gray-800 p-8">
@@ -261,13 +270,18 @@ export default function BountyDetailsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-800">
             <div>
               <h3 className="font-roboto text-sm mb-2 text-gray-500">Reward</h3>
-              <p className="font-roboto font-semibold text-2xl text-[var(--color-secondary)]">
-                {formatEther(
-                  (committedAmount && committedAmount > 0n
-                    ? committedAmount
-                    : (amount?.result as bigint) || 0n) as bigint,
-                )}{" "}
-                ETH
+              <p className="font-roboto font-semibold text-2xl text-[var(--color-secondary)] whitespace-nowrap">
+                <span className="relative inline-flex items-center gap-1 group" title={`${fullEth} ETH`}>
+                  {shortEth} ETH
+                  {isTrimmed && (
+                    <>
+                      <span className="text-gray-400 align-top text-sm">≈</span>
+                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black border border-gray-700 text-white text-xs font-roboto whitespace-nowrap opacity-0 group-hover:opacity-100">
+                        {fullEth} ETH
+                      </span>
+                    </>
+                  )}
+                </span>
               </p>
             </div>
             <div>
@@ -320,7 +334,7 @@ export default function BountyDetailsPage() {
                   {hasMySubmission && connectedAddress && (
                     <a
                       href={`/reports/${bountyAddress}?researcher=${connectedAddress}`}
-                      className="px-3 py-1 bg-purple-900/30 text-purple-300 border border-purple-700 text-xs font-roboto hover:bg-purple-900/40"
+                      className="px-3 py-1 bg-secondary/30 text-secondary border border-secondary text-xs font-roboto hover:bg-secondary/50"
                     >
                       My Submission
                     </a>

@@ -10,6 +10,7 @@ import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
 import deployedContracts from "~~/contracts/deployedContracts";
 import { useScaffoldReadContract, useTargetNetwork } from "~~/hooks/scaffold-eth";
+import { formatEthShort } from "~~/utils/format";
 
 type BountyCardProps = {
   id: string;
@@ -72,14 +73,31 @@ const BountyCard = ({
     fetchMetadata();
   }, [cid, id]);
 
+  // Short vs full formatting for reward
+  const fullEth = formatEther(amount);
+  const shortEth = formatEthShort(amount, 6);
+  const isTrimmed = (fullEth.split(".")[1]?.length || 0) > 6;
+
   return (
     <div
       className={`bg-gray-900 border border-gray-800 hover:border-[var(--color-secondary)]/50 p-6 transition-all duration-300 hover:scale-105 ${isMetadataLoading ? "animate-pulse" : ""}`}
     >
       <div className="flex justify-between items-start mb-4">
-        <div className={`px-3 py-1 text-xs font-roboto font-medium ${getSeverityColor(metadata.severity)}`}>
-          {metadata.severity}
+        <div className="flex flex-row gap-4">
+          {" "}
+          <div className={`px-3 py-1 text-xs font-roboto font-medium ${getSeverityColor(metadata.severity)}`}>
+            {metadata.severity}
+          </div>
+          {hasSubmitted && connectedAddress && (
+            <Link
+              href={`/reports/${id}?researcher=${connectedAddress}`}
+              className="px-2 py-1 bg-secondary/30 text-secondary border border-secondary text-xs font-roboto hover:bg-secondary/50"
+            >
+              Submitted
+            </Link>
+          )}
         </div>
+
         <div className={`px-3 py-1 text-xs font-roboto font-medium ${getStatusColor(BountyStatus[status])}`}>
           {BountyStatus[status]}
         </div>
@@ -89,7 +107,19 @@ const BountyCard = ({
       <div className="flex justify-between items-center text-sm mb-4 pt-4 border-t border-gray-800">
         <div>
           <p className="text-gray-500 font-roboto text-xs mb-1">Reward</p>
-          <p className="font-roboto font-medium text-lg text-[var(--color-secondary)]">{formatEther(amount)} ETH</p>
+          <p className="font-roboto font-medium text-lg text-[var(--color-secondary)] whitespace-nowrap">
+            <span className="relative inline-flex items-center gap-1 group" title={`${fullEth} ETH`}>
+              {shortEth} ETH
+              {isTrimmed && (
+                <>
+                  <span className="text-gray-400 align-top text-xs">≈</span>
+                  <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black border border-gray-700 text-white text-xs font-roboto whitespace-nowrap opacity-0 group-hover:opacity-100">
+                    {fullEth} ETH
+                  </span>
+                </>
+              )}
+            </span>
+          </p>
         </div>
         <div className="text-right">
           <p className="text-gray-500 font-roboto text-xs mb-1">Posted by</p>
@@ -100,14 +130,6 @@ const BountyCard = ({
         <div className="text-gray-400 font-roboto">
           Submissions: <span className="text-white font-medium">{submissionCount}</span>
         </div>
-        {hasSubmitted && connectedAddress && (
-          <Link
-            href={`/reports/${id}?researcher=${connectedAddress}`}
-            className="px-2 py-1 bg-purple-900/30 text-purple-300 border border-purple-700 text-xs font-roboto hover:bg-purple-900/40"
-          >
-            Submitted
-          </Link>
-        )}
       </div>
       <Link
         href={`/bounties/${id}`}

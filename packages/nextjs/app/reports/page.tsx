@@ -9,6 +9,7 @@ import { Address } from "~~/components/scaffold-eth";
 import { SubmissionStatus, bountyABI } from "~~/contracts/BountyABI";
 import deployedContracts from "~~/contracts/deployedContracts";
 import { useScaffoldReadContract, useTargetNetwork } from "~~/hooks/scaffold-eth";
+import { formatEthShort } from "~~/utils/format";
 
 type ReportItem = {
   bounty: `0x${string}`;
@@ -301,54 +302,72 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map(r => (
-            <div
-              key={`${r.bounty}-${r.researcher}`}
-              className="bg-gray-900 border border-gray-800 hover:border-[var(--color-secondary)]/50 p-6 transition-all duration-300 hover:scale-105"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div
-                  className={
-                    r.subState === 1
-                      ? BADGE_PURPLE
-                      : r.subState === 2
-                        ? BADGE_GREEN
-                        : r.subState === 3
-                          ? BADGE_RED
-                          : BADGE_GRAY
-                  }
-                >
-                  {SubmissionStatus[r.subState]}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={BADGE_PRIMARY}>{formatEther(r.amount)} ETH</span>
-                  <span className={r.visibility === 1 ? BADGE_GREEN : BADGE_GRAY}>
-                    {r.visibility === 1 ? "Public" : "Private"}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-2 space-y-3 text-sm">
-                <div>
-                  <span className="text-gray-500 font-roboto text-xs block mb-1">Bounty</span>
-                  <Address address={r.bounty} format="short" />
-                </div>
-                <div>
-                  <span className="text-gray-500 font-roboto text-xs block mb-1">Researcher</span>
-                  <Address address={r.researcher} format="short" />
-                </div>
-                <div className="truncate">
-                  <span className="text-gray-500 font-roboto text-xs block mb-1">CID</span>
-                  <span className="font-mono text-xs text-gray-400">{r.reportCid}</span>
-                </div>
-              </div>
-              <Link
-                href={`/reports/${r.bounty}?researcher=${r.researcher}`}
-                className="block w-full text-center px-4 py-2 mt-4 bg-[var(--color-secondary)] hover:opacity-90 text-black font-roboto text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+          {filtered.map(r => {
+            const fullEth = formatEther(r.amount);
+            const shortEth = formatEthShort(r.amount, 6);
+            const isTrimmed = (fullEth.split(".")[1]?.length || 0) > 6;
+
+            return (
+              <div
+                key={`${r.bounty}-${r.researcher}`}
+                className="bg-gray-900 border border-gray-800 hover:border-[var(--color-secondary)]/50 p-6 transition-all duration-300 hover:scale-105"
               >
-                View Report
-              </Link>
-            </div>
-          ))}
+                <div className="flex justify-between items-start mb-4">
+                  <div
+                    className={
+                      r.subState === 1
+                        ? BADGE_PURPLE
+                        : r.subState === 2
+                          ? BADGE_GREEN
+                          : r.subState === 3
+                            ? BADGE_RED
+                            : BADGE_GRAY
+                    }
+                  >
+                    {SubmissionStatus[r.subState]}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={BADGE_PRIMARY + " whitespace-nowrap"} title={`${fullEth} ETH`}>
+                      <span className="relative inline-flex items-center gap-1 group">
+                        {shortEth} ETH
+                        {isTrimmed && (
+                          <>
+                            <span className="text-gray-400 align-top text-[10px]">≈</span>
+                            <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black border border-gray-700 text-white text-xs font-roboto whitespace-nowrap opacity-0 group-hover:opacity-100">
+                              {fullEth} ETH
+                            </span>
+                          </>
+                        )}
+                      </span>
+                    </span>
+                    <span className={r.visibility === 1 ? BADGE_GREEN : BADGE_GRAY}>
+                      {r.visibility === 1 ? "Public" : "Private"}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-2 space-y-3 text-sm">
+                  <div>
+                    <span className="text-gray-500 font-roboto text-xs block mb-1">Bounty</span>
+                    <Address address={r.bounty} format="short" />
+                  </div>
+                  <div>
+                    <span className="text-gray-500 font-roboto text-xs block mb-1">Researcher</span>
+                    <Address address={r.researcher} format="short" />
+                  </div>
+                  <div className="truncate">
+                    <span className="text-gray-500 font-roboto text-xs block mb-1">CID</span>
+                    <span className="font-mono text-xs text-gray-400">{r.reportCid}</span>
+                  </div>
+                </div>
+                <Link
+                  href={`/reports/${r.bounty}?researcher=${r.researcher}`}
+                  className="block w-full text-center px-4 py-2 mt-4 bg-[var(--color-secondary)] hover:opacity-90 text-black font-roboto text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+                >
+                  View Report
+                </Link>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -17,6 +17,7 @@ import { EyeIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, SubmissionStatus, bountyABI } from "~~/contracts/BountyABI";
 import deployedContracts from "~~/contracts/deployedContracts";
+import { formatEthShort } from "~~/utils/format";
 import { notification } from "~~/utils/scaffold-eth";
 
 // Consistent badge styles
@@ -210,6 +211,13 @@ export default function ReportDetailsPage() {
     }
   };
 
+  // Compute display reward
+  const rewardWei = committedAmount != null ? committedAmount : ((amount?.result as bigint) ?? 0n);
+
+  const fullEth = formatEther(rewardWei);
+  const shortEth = formatEthShort(rewardWei, 6);
+  const isTrimmed = (fullEth.split(".")[1]?.length || 0) > 6;
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="bg-gray-900 border border-gray-800 p-8">
@@ -248,12 +256,18 @@ export default function ReportDetailsPage() {
           </div>
           <div>
             <h3 className="text-gray-500 font-roboto text-sm mb-2">Reward</h3>
-            <div className="text-[var(--color-secondary)] font-roboto font-semibold">
-              {committedAmount != null
-                ? `${formatEther(committedAmount)} ETH`
-                : amount?.result
-                  ? `${formatEther(amount.result as bigint)} ETH`
-                  : "0 ETH"}
+            <div className="text-[var(--color-secondary)] font-roboto font-semibold whitespace-nowrap">
+              <span className="relative inline-flex items-center gap-1 group" title={`${fullEth} ETH`}>
+                {shortEth} ETH
+                {isTrimmed && (
+                  <>
+                    <span className="text-gray-400 align-top text-xs">≈</span>
+                    <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black border border-gray-700 text-white text-xs font-roboto whitespace-nowrap opacity-0 group-hover:opacity-100">
+                      {fullEth} ETH
+                    </span>
+                  </>
+                )}
+              </span>
             </div>
           </div>
           <div>
