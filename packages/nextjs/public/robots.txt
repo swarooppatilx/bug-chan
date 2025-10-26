@@ -4,4 +4,4 @@ Disallow: /blockexplorer
 Allow: /
 
 Sitemap: https://bugchan.xyz/sitemap.xml
-Host: https://bugchan.xyz
+Host: bugchan.xyz
