@@ -1,7 +1,13 @@
 import TransactionComp from "../_components/TransactionComp";
-import type { NextPage } from "next";
+import type { Metadata, NextPage } from "next";
 import { Hash } from "viem";
 import { isZeroAddress } from "~~/utils/scaffold-eth/common";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+  title: "Block Explorer — Transaction",
+  description: "Local-only block explorer transaction details",
+};
 
 type PageProps = {
   params: Promise<{ txHash?: Hash }>;
