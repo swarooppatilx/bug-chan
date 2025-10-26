@@ -59,7 +59,7 @@ export const RainbowKitCustomConnectButton = () => {
                     address={account.address as Address}
                     displayName={account.displayName}
                     ensAvatar={account.ensAvatar}
-                    blockExplorerAddressLink={`https://eth-sepolia.blockscout.com/${account.address}`}
+                    blockExplorerAddressLink={`https://eth-sepolia.blockscout.com/address/${account.address}`}
                   />
                   <AddressQRCodeModal address={account.address as Address} modalId="qrcode-modal" />
                   <RevealBurnerPKModal />
