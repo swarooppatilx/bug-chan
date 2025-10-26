@@ -20,7 +20,7 @@ export const metadata: Metadata = getMetadata({
 
 function Feature({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <div className="border border-gray-800 p-5 h-full flex flex-col">
+    <div className="border border-gray-800 rounded-lg p-5 h-full flex flex-col hover:border-[var(--color-secondary)]/50 transition-all duration-300">
       <div className="flex items-center gap-3 mb-2">
         {children}
         <span className="font-roboto">{title}</span>
@@ -45,13 +45,13 @@ export default function AboutPage() {
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
                 href="/bounties/create"
-                className="bg-[var(--color-primary)] hover:opacity-90 text-white px-6 py-3 inline-flex items-center gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-95"
+                className="rounded-lg bg-[var(--color-primary)] hover:opacity-90 text-white px-6 py-3 inline-flex items-center gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-95"
               >
                 Start a Program
               </Link>
               <Link
                 href="/bounties"
-                className="border border-[var(--color-secondary)]/50 hover:border-[var(--color-secondary)] text-white px-6 py-3 inline-flex items-center gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-95"
+                className="rounded-lg border border-[var(--color-secondary)]/50 hover:border-[var(--color-secondary)] text-white px-6 py-3 inline-flex items-center gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-95"
               >
                 Explore Bounties
               </Link>
@@ -91,7 +91,7 @@ export default function AboutPage() {
         </div>
 
         {/* Technology */}
-        <div className="mt-10 border border-gray-800 p-5">
+        <div className="mt-10 border border-gray-800 rounded-lg p-5 hover:border-[var(--color-secondary)]/50 transition-all duration-300">
           <div className="flex items-start gap-3">
             <BoltIcon className="h-6 w-6 text-[var(--color-secondary)] mt-0.5" />
             <div>
@@ -116,7 +116,7 @@ export default function AboutPage() {
 
         {/* Security Model */}
         <div className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 border border-gray-800 p-5">
+          <div className="lg:col-span-7 border border-gray-800 rounded-lg p-5 hover:border-[var(--color-secondary)]/50 transition-all duration-300">
             <div className="flex items-start gap-3 mb-3">
               <LockClosedIcon className="h-6 w-6 text-[var(--color-secondary)] mt-0.5" />
               <h3 className="font-roboto font-normal">Security Model</h3>
@@ -128,7 +128,7 @@ export default function AboutPage() {
               <li>Stake mechanism deters spam submissions.</li>
             </ul>
           </div>
-          <div className="lg:col-span-5 border border-gray-800 p-5">
+          <div className="lg:col-span-5 border border-gray-800 rounded-lg p-5 hover:border-[var(--color-secondary)]/50 transition-all duration-300">
             <div className="flex items-start gap-3 mb-3">
               <ShieldCheckIcon className="h-6 w-6 text-[var(--color-secondary)] mt-0.5" />
               <h3 className="font-roboto font-normal">Requirements</h3>
@@ -136,7 +136,12 @@ export default function AboutPage() {
             <ul className="text-gray-300 text-sm space-y-1">
               <li>Sepolia testnet wallet with ETH for gas fees.</li>
               <li>
-                <a href="https://metamask.io/download.html" target="_blank" rel="noreferrer" className="underline">
+                <a
+                  href="https://metamask.io/download.html"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline hover:text-[var(--color-secondary)] transition-colors duration-300"
+                >
                   Install MetaMask
                 </a>
               </li>
@@ -145,7 +150,7 @@ export default function AboutPage() {
                   href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia"
                   target="_blank"
                   rel="noreferrer"
-                  className="underline"
+                  className="underline hover:text-[var(--color-secondary)] transition-colors duration-300"
                 >
                   Get Sepolia ETH
                 </a>
@@ -158,7 +163,7 @@ export default function AboutPage() {
         <div className="mt-12">
           <h2 className="text-2xl font-roboto font-light mb-4">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="border border-gray-800 p-5">
+            <div className="border border-gray-800 rounded-lg p-5 hover:border-[var(--color-secondary)]/50 transition-all duration-300">
               <h3 className="flex items-center gap-2 mb-2">
                 <CloudArrowUpIcon className="h-5 w-5 text-[var(--color-secondary)]" /> For Project Owners
               </h3>
@@ -169,7 +174,7 @@ export default function AboutPage() {
                 <li>Close bounty for automatic reward distribution.</li>
               </ul>
             </div>
-            <div className="border border-gray-800 p-5">
+            <div className="border border-gray-800 rounded-lg p-5 hover:border-[var(--color-secondary)]/50 transition-all duration-300">
               <h3 className="flex items-center gap-2 mb-2">
                 <BugAntIcon className="h-5 w-5 text-[var(--color-secondary)]" /> For Researchers
               </h3>
@@ -184,7 +189,7 @@ export default function AboutPage() {
         </div>
 
         {/* Rewards & Incentives */}
-        <div className="mt-10 border border-gray-800 p-5">
+        <div className="mt-10 border border-gray-800 rounded-lg p-5 hover:border-[var(--color-secondary)]/50 transition-all duration-300">
           <div className="flex items-center gap-2 mb-3">
             <BanknotesIcon className="h-6 w-6 text-[var(--color-secondary)]" />
             <h3 className="font-roboto font-normal">Rewards & Incentives</h3>
