@@ -2,6 +2,7 @@ import { Roboto } from "next/font/google";
 import localFont from "next/font/local";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "@rainbow-me/rainbowkit/styles.css";
+import type { Viewport } from "next";
 import { ScaffoldEthAppWithProviders } from "~~/components/ScaffoldEthAppWithProviders";
 import { ThemeProvider } from "~~/components/ThemeProvider";
 import "~~/styles/globals.css";
@@ -13,6 +14,10 @@ export const metadata = {
     title: "BugChan",
     description: "A Decentralized Bug Bounty Platform",
   }),
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0B0B0B",
 };
 
 const akiraExpanded = localFont({

@@ -130,7 +130,7 @@ const deployedContracts = {
   },
   11155111: {
     BountyFactory: {
-      address: "0xbb08b9cbfb0d8a70bd2b4248dd3b5c5687d1c2eb",
+      address: "0xa972f4a44fe8e189a5d5472f995b584142078673",
       abi: [
         {
           inputs: [],
@@ -248,7 +248,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 9480617,
+      deployedOnBlock: 9487247,
     },
   },
 } as const;

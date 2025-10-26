@@ -1,4 +1,5 @@
 import fs from "fs";
+import type { Metadata } from "next";
 import path from "path";
 import { Address } from "viem";
 import { hardhat } from "viem/chains";
@@ -6,6 +7,12 @@ import { AddressComponent } from "~~/app/blockexplorer/_components/AddressCompon
 import deployedContracts from "~~/contracts/deployedContracts";
 import { isZeroAddress } from "~~/utils/scaffold-eth/common";
 import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+  title: "Block Explorer — Address",
+  description: "Local-only block explorer address details",
+};
 
 type PageProps = {
   params: Promise<{ address: Address }>;
