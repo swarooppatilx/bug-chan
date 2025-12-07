@@ -2068,10 +2068,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/env@npm:15.2.5":
-  version: 15.2.5
-  resolution: "@next/env@npm:15.2.5"
-  checksum: 39b23d80e5b5984c9ee7ff65fe48e167becb35b87b7087a53a234fa3a0b80940626c1f3b9f9dfdcbfc9d647fd2faad67b3c6497fabb9993b0a45e3779984cec5
+"@next/env@npm:15.2.6":
+  version: 15.2.6
+  resolution: "@next/env@npm:15.2.6"
+  checksum: a8043d092fe3ab0ecf7da9a616d872c8a4c8d60966cc6863c5bd2970bbd8133d7ef4c46b38b153b33dc05960661b362699508ead3de00e9839c25d2e36324308
   languageName: node
   linkType: hard
 
@@ -3588,7 +3588,7 @@ __metadata:
     eslint-config-prettier: ~10.1.1
     eslint-plugin-prettier: ~5.2.4
     kubo-rpc-client: ~5.0.2
-    next: ~15.2.3
+    next: 15.2.6
     next-nprogress-bar: ~2.3.13
     next-themes: ~0.3.0
     postcss: ~8.4.45
@@ -12082,11 +12082,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"next@npm:~15.2.3":
-  version: 15.2.5
-  resolution: "next@npm:15.2.5"
+"next@npm:15.2.6":
+  version: 15.2.6
+  resolution: "next@npm:15.2.6"
   dependencies:
-    "@next/env": 15.2.5
+    "@next/env": 15.2.6
     "@next/swc-darwin-arm64": 15.2.5
     "@next/swc-darwin-x64": 15.2.5
     "@next/swc-linux-arm64-gnu": 15.2.5
@@ -12139,7 +12139,7 @@ __metadata:
       optional: true
   bin:
     next: dist/bin/next
-  checksum: 191464cc3b190977deb2cdc92bd61642f8558cbc31ec020e11bb4f34ed01ccae20953c0ba0a1f28d98bc3297c839e52434fc1a5ed7fd10f01a92641615fe7ec0
+  checksum: d2b1bf30ea31e000094d7782c38d54f9b959e4329af70d2c74f792e3b63015a5a2e73c609a26eda189a7bc44b3b1533d053591b147dffe7d15f5623197bd2d4c
   languageName: node
   linkType: hard
 
