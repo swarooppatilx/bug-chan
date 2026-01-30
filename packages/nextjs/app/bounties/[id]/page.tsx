@@ -32,7 +32,7 @@ export default function BountyDetailsPage() {
   const [description, setDescription] = useState("");
   const [contact, setContact] = useState("");
   const [stakeEth, setStakeEth] = useState("0.00");
-  const [metadata, setMetadata] = useState({ title: "Loading...", description: "Loading...", severity: "Medium" });
+  const [metadata, setMetadata] = useState({ title: "Loading...", description: "Loading..." });
   const [submitting, setSubmitting] = useState(false);
   const [submitters, setSubmitters] = useState<string[]>([]);
   const [committedAmount, setCommittedAmount] = useState<bigint>(0n);
@@ -49,13 +49,14 @@ export default function BountyDetailsPage() {
       { address: bountyAddress, abi: bountyABI, functionName: "stakeAmount" },
       { address: bountyAddress, abi: bountyABI, functionName: "endTime" },
       { address: bountyAddress, abi: bountyABI, functionName: "getSubmitters" },
+      { address: bountyAddress, abi: bountyABI, functionName: "triager" },
     ],
     query: {
       refetchInterval: 5000,
     },
   });
 
-  const [owner, amount, cid, status, stakeAmount, endTimeResult, submittersResult] = bountyData || [];
+  const [owner, amount, cid, status, stakeAmount, endTimeResult, submittersResult, triagerResult] = bountyData || [];
 
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
@@ -113,7 +114,6 @@ export default function BountyDetailsPage() {
           setMetadata({
             title: meta.title || `Bounty: ${bountyAddress.substring(0, 8)}...`,
             description: meta.description || "No description provided",
-            severity: meta.severity || "Medium",
           });
         } else {
           throw new Error(`Lighthouse gateway returned status ${response.status}`);
@@ -311,10 +311,12 @@ export default function BountyDetailsPage() {
               <h3 className="font-roboto text-sm mb-2 text-gray-500">Posted by</h3>
               <Address address={owner?.result as string} />
             </div>
-            <div>
-              <h3 className="font-roboto text-sm mb-2 text-gray-500">Severity</h3>
-              <p className="font-roboto text-white">{metadata.severity}</p>
-            </div>
+            {triagerResult?.result && triagerResult.result !== "0x0000000000000000000000000000000000000000" && (
+              <div>
+                <h3 className="font-roboto text-sm mb-2 text-gray-500">Triager</h3>
+                <Address address={triagerResult.result as string} />
+              </div>
+            )}
             <div>
               <h3 className="font-roboto text-sm mb-2 text-gray-500">Stake</h3>
               <div className="flex items-center gap-2">

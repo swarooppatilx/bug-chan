@@ -10,7 +10,7 @@ import {
   CurrencyDollarIcon,
   DocumentTextIcon,
   PencilSquareIcon,
-  ShieldExclamationIcon,
+  ShieldCheckIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import MDEditor from "~~/components/MDEditor";
@@ -23,7 +23,7 @@ type BountyForm = {
   description: string;
   amount: string;
   projectAddress: string;
-  severity: "Low" | "Medium" | "High" | "Critical";
+  triagerAddress: string;
   stake: string;
   durationDays: string;
 };
@@ -55,7 +55,7 @@ export default function CreateBountyPage() {
     description: "",
     amount: "",
     projectAddress: connectedAddress || "",
-    severity: "Medium",
+    triagerAddress: "",
     stake: "0.01",
     durationDays: "7",
   });
@@ -92,7 +92,6 @@ export default function CreateBountyPage() {
         JSON.stringify({
           title: form.title,
           description: form.description,
-          severity: form.severity,
         }),
         apiKey,
       );
@@ -101,7 +100,13 @@ export default function CreateBountyPage() {
 
       await writeBountyFactoryAsync({
         functionName: "createBounty",
-        args: [form.projectAddress, cid, parseEther(form.stake), BigInt(durationDaysNum * 24 * 60 * 60)],
+        args: [
+          form.projectAddress,
+          cid,
+          parseEther(form.stake),
+          BigInt(durationDaysNum * 24 * 60 * 60),
+          form.triagerAddress || "0x0000000000000000000000000000000000000000",
+        ],
         value: parseEther(form.amount),
       });
 
@@ -176,23 +181,6 @@ export default function CreateBountyPage() {
                   placeholder="7"
                 />
               </FormField>
-
-              <FormField
-                label="Severity"
-                icon={<ShieldExclamationIcon className="h-5 w-5" />}
-                helperText="How critical is the potential vulnerability?"
-              >
-                <select
-                  value={form.severity}
-                  onChange={e => setForm({ ...form, severity: e.target.value as BountyForm["severity"] })}
-                  className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                  <option value="Critical">Critical</option>
-                </select>
-              </FormField>
             </div>
           </div>
 
@@ -205,6 +193,18 @@ export default function CreateBountyPage() {
               value={form.projectAddress}
               onChange={value => setForm({ ...form, projectAddress: value })}
               placeholder="The address that will manage the bounty"
+            />
+          </FormField>
+
+          <FormField
+            label="Triager Address (Optional)"
+            icon={<ShieldCheckIcon className="h-5 w-5" />}
+            helperText="This address can view reports and assign severity levels. Leave empty if not needed."
+          >
+            <AddressInput
+              value={form.triagerAddress}
+              onChange={value => setForm({ ...form, triagerAddress: value })}
+              placeholder="The address that will triage submissions"
             />
           </FormField>
 

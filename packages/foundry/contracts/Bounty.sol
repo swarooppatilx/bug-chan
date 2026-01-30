@@ -27,7 +27,17 @@ contract Bounty {
         Public // plaintext CID (public)
     }
 
+    // Severity levels for triage
+    enum Severity {
+        None,
+        Low,
+        Medium,
+        High,
+        Critical
+    }
+
     address public owner;
+    address public triager; // Triager can view reports and assign severity
     uint256 public amount;
     string public cid; // IPFS CID for bounty details (title, description, severity)
     Status public status;
@@ -40,6 +50,7 @@ contract Bounty {
         uint256 stake;
         SubmissionState state;
         Visibility visibility; // 0=Private, 1=Public
+        Severity severity; // Assigned by triager
     }
 
     mapping(address => Submission) private _submissions; // per-wallet single submission
@@ -53,13 +64,15 @@ contract Bounty {
     event StakeRefunded(address indexed researcher, uint256 amount);
     event StakeSlashed(address indexed researcher, uint256 amount, address indexed receiver);
     event BountyClosed(uint256 winners, uint256 totalPaid);
+    event SeveritySet(address indexed researcher, Severity severity);
     event SubmissionVisibilityChanged(address indexed researcher, Visibility visibility, string cid);
 
-    constructor(address _owner, string memory _cid, uint256 _stakeAmount, uint256 _duration) payable {
+    constructor(address _owner, string memory _cid, uint256 _stakeAmount, uint256 _duration, address _triager) payable {
         require(msg.value > 0, "Bounty amount cannot be zero");
         require(_stakeAmount > 0, "Stake amount must be > 0");
         require(_duration > 0, "Duration must be > 0");
         owner = _owner;
+        triager = _triager;
         cid = _cid;
         amount = msg.value;
         status = Status.Open;
@@ -199,7 +212,7 @@ contract Bounty {
 
     /**
      * @dev Update a submission's visibility and CID.
-     * Only bounty owner or the submission's researcher can call it.
+     * Only bounty owner, triager, or the submission's researcher can call it.
      * Researcher cannot publish while Pending or while owner is fixing.
      */
     function setSubmissionVisibility(address _researcher, Visibility _visibility, string calldata _newCid) external {
@@ -207,8 +220,9 @@ contract Bounty {
         require(subm.state != SubmissionState.None, "No submission");
 
         bool isOwner = msg.sender == owner;
+        bool isTriager = msg.sender == triager;
         bool isResearcher = msg.sender == _researcher;
-        require(isOwner || isResearcher, "Not allowed");
+        require(isOwner || isTriager || isResearcher, "Not allowed");
 
         if (isResearcher) {
             require(subm.state != SubmissionState.Pending, "Not allowed while Pending");
@@ -217,6 +231,19 @@ contract Bounty {
         subm.reportCid = _newCid;
         subm.visibility = _visibility;
         emit SubmissionVisibilityChanged(_researcher, _visibility, _newCid);
+    }
+
+    /**
+     * @dev Set the severity of a submission. Only the triager can call this.
+     * @param _researcher The address of the researcher whose submission to update.
+     * @param _severity The severity level to assign.
+     */
+    function setSeverity(address _researcher, Severity _severity) external {
+        require(msg.sender == triager, "Only triager can set severity");
+        Submission storage subm = _submissions[_researcher];
+        require(subm.state != SubmissionState.None, "No submission");
+        subm.severity = _severity;
+        emit SeveritySet(_researcher, _severity);
     }
     /**
      * @dev Returns the list of submitter addresses.
@@ -230,8 +257,8 @@ contract Bounty {
      */
     function getSubmission(
         address _researcher
-    ) external view returns (string memory, uint256, SubmissionState, Visibility) {
+    ) external view returns (string memory, uint256, SubmissionState, Visibility, Severity) {
         Submission storage s = _submissions[_researcher];
-        return (s.reportCid, s.stake, s.state, s.visibility);
+        return (s.reportCid, s.stake, s.state, s.visibility, s.severity);
     }
 }

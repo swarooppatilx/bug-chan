@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     BountyFactory: {
-      address: "0x700b6a60ce7eaaea56f065753d8dcb9653dbad35",
+      address: "0xe1aa25618fa0c7a1cfdab5d6b456af611873b629",
       abi: [
         {
           type: "constructor",
@@ -37,6 +37,11 @@ const deployedContracts = {
               name: "_duration",
               type: "uint256",
               internalType: "uint256",
+            },
+            {
+              name: "_triager",
+              type: "address",
+              internalType: "address",
             },
           ],
           outputs: [
@@ -120,12 +125,18 @@ const deployedContracts = {
               indexed: false,
               internalType: "uint256",
             },
+            {
+              name: "triager",
+              type: "address",
+              indexed: false,
+              internalType: "address",
+            },
           ],
           anonymous: false,
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 1,
+      deployedOnBlock: 5,
     },
   },
   11155111: {
@@ -161,6 +172,11 @@ const deployedContracts = {
               type: "uint256",
               internalType: "uint256",
             },
+            {
+              name: "_triager",
+              type: "address",
+              internalType: "address",
+            },
           ],
           outputs: [
             {
@@ -242,6 +258,12 @@ const deployedContracts = {
               type: "uint256",
               indexed: false,
               internalType: "uint256",
+            },
+            {
+              name: "triager",
+              type: "address",
+              indexed: false,
+              internalType: "address",
             },
           ],
           anonymous: false,

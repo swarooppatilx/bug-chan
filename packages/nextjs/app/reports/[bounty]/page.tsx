@@ -29,6 +29,26 @@ const BADGE_PURPLE = `${BADGE_BASE} bg-purple-900/30 border-purple-700 text-purp
 const BADGE_GREEN = `${BADGE_BASE} bg-green-900/30 border-green-700 text-green-400`;
 const BADGE_RED = `${BADGE_BASE} bg-red-900/30 border-red-700 text-red-400`;
 const BADGE_GRAY = `${BADGE_BASE} bg-gray-800 border-gray-700 text-gray-400`;
+const BADGE_YELLOW = `${BADGE_BASE} bg-yellow-900/30 border-yellow-700 text-yellow-400`;
+const BADGE_ORANGE = `${BADGE_BASE} bg-orange-900/30 border-orange-700 text-orange-400`;
+
+// Severity levels - must match contract enum
+const SeverityLabels = ["None", "Low", "Medium", "High", "Critical"] as const;
+
+const getSeverityBadgeClass = (severity: number) => {
+  switch (severity) {
+    case 1:
+      return BADGE_GREEN; // Low
+    case 2:
+      return BADGE_YELLOW; // Medium
+    case 3:
+      return BADGE_ORANGE; // High
+    case 4:
+      return BADGE_RED; // Critical
+    default:
+      return BADGE_GRAY; // None
+  }
+};
 
 export default function ReportDetailsPage() {
   const { bounty } = useParams();
@@ -49,6 +69,7 @@ export default function ReportDetailsPage() {
       { address: bountyAddress, abi: bountyABI, functionName: "amount" },
       { address: bountyAddress, abi: bountyABI, functionName: "status" },
       { address: bountyAddress, abi: bountyABI, functionName: "stakeAmount" },
+      { address: bountyAddress, abi: bountyABI, functionName: "triager" },
       ...(researcherAddr
         ? [{ address: bountyAddress, abi: bountyABI, functionName: "getSubmission", args: [researcherAddr] }]
         : []),
@@ -56,7 +77,7 @@ export default function ReportDetailsPage() {
     query: { refetchInterval: 5000 },
   });
 
-  const [owner, amount, status, stakeAmount, submissionTuple] = bountyData || [];
+  const [owner, amount, status, stakeAmount, triagerResult, submissionTuple] = bountyData || [];
 
   useEffect(() => {
     let cancelled = false;
@@ -98,21 +119,32 @@ export default function ReportDetailsPage() {
   }, [isConfirmed, error, refetch]);
 
   const isOwner = connectedAddress === (owner?.result as string);
+  const isTriager = connectedAddress === (triagerResult?.result as string) && 
+    triagerResult?.result !== "0x0000000000000000000000000000000000000000";
   const statusIdx = useMemo(() => Number(status?.result ?? 0), [status?.result]);
   const currentStatus = BountyStatus[statusIdx] ?? "Loading...";
-  const [reportCidStr, subState, visibility] = useMemo(() => {
-    if (!submissionTuple?.result) return ["", 0, 0] as [string, number, number];
-    const [cid, , state, vis] = submissionTuple.result as [string, bigint, number, number];
-    return [cid, Number(state || 0), Number(vis || 0)];
+  const [reportCidStr, subState, visibility, severity] = useMemo(() => {
+    if (!submissionTuple?.result) return ["", 0, 0, 0] as [string, number, number, number];
+    const [cid, , state, vis, sev] = submissionTuple.result as [string, bigint, number, number, number];
+    return [cid, Number(state || 0), Number(vis || 0), Number(sev || 0)];
   }, [submissionTuple?.result]);
+
+  const [selectedSeverity, setSelectedSeverity] = useState<number>(0);
+  const [settingSeverity, setSettingSeverity] = useState(false);
+
+  // Sync selected severity with current severity when it changes
+  useEffect(() => {
+    setSelectedSeverity(severity);
+  }, [severity]);
 
   // Allow making public only when:
   // - currently Private
-  // - owner can always do it
+  // - owner or triager can always do it
   // - researcher can do it only when not Pending and while no fix is in progress
   const canMakePublic =
     visibility === 0 &&
     (isOwner ||
+      isTriager ||
       (connectedAddress && connectedAddress.toLowerCase() === (researcherAddr || "").toLowerCase() && subState !== 1));
 
   const handleAccept = () =>
@@ -138,7 +170,30 @@ export default function ReportDetailsPage() {
       refetch();
     } catch (e: any) {
       console.error("reject error", e);
-      notification.error(e?.message || "Failed to reject submission");
+      const errMsg = typeof e?.message === "string" ? e.message : typeof e === "string" ? e : "Failed to reject submission";
+      notification.error(errMsg);
+    }
+  };
+
+  const handleSetSeverity = async () => {
+    if (!researcherAddr) return;
+    if (!connectedAddress) return notification.error("Connect your wallet.");
+    try {
+      setSettingSeverity(true);
+      await writeContractAsync({
+        address: bountyAddress,
+        abi: bountyABI,
+        functionName: "setSeverity",
+        args: [researcherAddr, selectedSeverity],
+      });
+      notification.success("Severity set successfully");
+      refetch();
+    } catch (e: any) {
+      console.error("setSeverity error", e);
+      const errMsg = typeof e?.message === "string" ? e.message : typeof e === "string" ? e : "Failed to set severity";
+      notification.error(errMsg);
+    } finally {
+      setSettingSeverity(false);
     }
   };
   const [reportJson, setReportJson] = useState<any | null>(null);
@@ -167,7 +222,8 @@ export default function ReportDetailsPage() {
       notification.success("Report decrypted");
     } catch (e: any) {
       console.error("decrypt error", e);
-      notification.error(e?.message || "Failed to decrypt report");
+      const errMsg = typeof e?.message === "string" ? e.message : typeof e === "string" ? e : "Failed to decrypt report";
+      notification.error(errMsg);
     } finally {
       setDecrypting(false);
     }
@@ -207,7 +263,8 @@ export default function ReportDetailsPage() {
       notification.success("Report made public");
       refetch();
     } catch (e: any) {
-      notification.error(e?.message || "Failed to make report public");
+      const errMsg = typeof e?.message === "string" ? e.message : typeof e === "string" ? e : "Failed to make report public";
+      notification.error(errMsg);
     } finally {
       setUpdatingVis(false);
     }
@@ -295,13 +352,54 @@ export default function ReportDetailsPage() {
               )}
             </div>
           )}
+          {reportCidStr && (
+            <div className="flex items-center gap-3">
+              <h3 className="text-gray-500 font-roboto text-sm mb-2">Severity</h3>
+              <div className={getSeverityBadgeClass(severity)}>
+                {SeverityLabels[severity] || "None"}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Triager Severity Assignment */}
+        {isTriager && reportCidStr && (
+          <div className="mt-6 p-4 bg-black border border-gray-800">
+            <h3 className="text-lg font-roboto font-medium text-white mb-4">Triage Actions</h3>
+            <div className="flex items-center gap-4">
+              <label className="text-gray-400 font-roboto text-sm">Assign Severity:</label>
+              <select
+                value={selectedSeverity}
+                onChange={e => setSelectedSeverity(Number(e.target.value))}
+                className="px-4 py-2 bg-gray-900 border border-gray-700 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors"
+              >
+                {SeverityLabels.map((label, idx) => (
+                  <option key={idx} value={idx}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleSetSeverity}
+                disabled={settingSeverity || isPending || selectedSeverity === severity}
+                className="px-4 py-2 bg-[var(--color-secondary)] hover:opacity-90 text-black font-roboto text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {settingSeverity ? (
+                  <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  "Set Severity"
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Report Content */}
         <div className="mt-8 pt-6 border-t border-gray-800">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-akira text-white">Report Content</h2>
             {(isOwner ||
+              isTriager ||
               (connectedAddress && connectedAddress.toLowerCase() === (researcherAddr || "").toLowerCase())) &&
               !reportJson &&
               visibility === 0 && (
