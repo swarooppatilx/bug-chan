@@ -13,3 +13,343 @@
 .button {
   cursor: pointer;
 }
+
+/* Scoped Markdown Editor Styles */
+.markdown-editor-container {
+  position: relative;
+  width: 100%;
+  font-family: var(--font-roboto), system-ui, sans-serif;
+}
+
+/* Tab bar */
+.markdown-editor-container .editor-tabs {
+  display: flex;
+  gap: 0;
+  background-color: #0a0a0a;
+  border: 1px solid #1f2937;
+  border-bottom: none;
+}
+
+.markdown-editor-container .editor-tabs button {
+  padding: 0.625rem 1.25rem;
+  background-color: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: var(--font-roboto), system-ui, sans-serif;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  position: relative;
+}
+
+.markdown-editor-container .editor-tabs button:hover {
+  color: #9ca3af;
+  background-color: #111111;
+}
+
+.markdown-editor-container .editor-tabs button.active {
+  color: white;
+  background-color: black;
+}
+
+.markdown-editor-container .editor-tabs button.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+}
+
+/* Editor body container */
+.markdown-editor-container .editor-body {
+  border: 1px solid #1f2937;
+  border-top: none;
+  background-color: black;
+  min-height: 280px;
+}
+
+/* Textarea for writing */
+.markdown-editor-container .editor-textarea {
+  width: 100%;
+  min-height: 280px;
+  padding: 1rem;
+  background-color: transparent;
+  border: none;
+  color: white;
+  font-family: var(--font-roboto), system-ui, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  resize: vertical;
+  outline: none;
+}
+
+.markdown-editor-container .editor-textarea::placeholder {
+  color: #4b5563;
+}
+
+.markdown-editor-container .editor-textarea:focus {
+  outline: none;
+}
+
+/* Preview panel */
+.markdown-editor-container .editor-preview {
+  min-height: 280px;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.markdown-editor-container .editor-preview .preview-empty {
+  color: #4b5563;
+  font-style: italic;
+}
+
+/* Footer */
+.markdown-editor-container .editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: var(--font-roboto), system-ui, sans-serif;
+}
+
+.markdown-editor-container .char-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scoped Markdown Content Rendered Styles */
+.markdown-content {
+  font-family: var(--font-roboto), system-ui, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: #e5e7eb;
+}
+
+.markdown-content h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #374151;
+}
+
+.markdown-content h2 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: white;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-content h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  margin-top: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content p {
+  margin-bottom: 1rem;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content a {
+  color: var(--color-secondary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.markdown-content a:hover {
+  border-bottom-color: var(--color-secondary);
+}
+
+.markdown-content strong {
+  font-weight: 600;
+  color: white;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+.markdown-content code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  padding: 0.125rem 0.375rem;
+  background-color: #1f2937;
+  color: var(--color-secondary);
+}
+
+.markdown-content pre {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: #0a0a0a;
+  border: 1px solid #1f2937;
+  overflow-x: auto;
+}
+
+.markdown-content pre code {
+  padding: 0;
+  background-color: transparent;
+  color: #e5e7eb;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.markdown-content blockquote {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--color-primary);
+  background-color: #0a0a0a;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.markdown-content blockquote p {
+  margin-bottom: 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+}
+
+.markdown-content ol {
+  list-style-type: decimal;
+}
+
+.markdown-content li {
+  margin-bottom: 0.375rem;
+}
+
+.markdown-content li::marker {
+  color: #6b7280;
+}
+
+.markdown-content li>ul,
+.markdown-content li>ol {
+  margin-top: 0.375rem;
+  margin-bottom: 0;
+}
+
+.markdown-content hr {
+  margin: 1.5rem 0;
+  border: none;
+  border-top: 1px solid #374151;
+}
+
+.markdown-content table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.markdown-content th,
+.markdown-content td {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #374151;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: #0a0a0a;
+  font-weight: 600;
+  color: white;
+}
+
+.markdown-content td {
+  background-color: black;
+}
+
+.markdown-content tr:hover td {
+  background-color: #0a0a0a;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+}
+
+.markdown-content input[type="checkbox"] {
+  margin-right: 0.5rem;
+  accent-color: var(--color-primary);
+}
+
+.markdown-content .task-list-item {
+  list-style-type: none;
+  margin-left: -1.5rem;
+  padding-left: 1.5rem;
+}
+
+/* Markdown Preview Panel */
+.markdown-preview {
+  min-height: 300px;
+  padding: 1rem;
+  background-color: black;
+  border: 1px solid #1f2937;
+  overflow-y: auto;
+}
+
+/* Tab styles for editor/preview toggle */
+.markdown-tabs {
+  display: flex;
+  border-bottom: 1px solid #1f2937;
+}
+
+.markdown-tabs button {
+  padding: 0.625rem 1rem;
+  background-color: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  font-family: var(--font-roboto), system-ui, sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.markdown-tabs button:hover {
+  color: #9ca3af;
+}
+
+.markdown-tabs button.active {
+  color: white;
+}
+
+.markdown-tabs button.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+}
