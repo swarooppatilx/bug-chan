@@ -7,248 +7,248 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     BountyFactory: {
-      address: "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512",
+      address: "0x700b6a60ce7eaaea56f065753d8dcb9653dbad35",
       abi: [
         {
+          type: "constructor",
           inputs: [],
           stateMutability: "nonpayable",
-          type: "constructor",
         },
         {
-          anonymous: false,
+          type: "function",
+          name: "createBounty",
           inputs: [
             {
-              indexed: true,
-              internalType: "address",
-              name: "bountyAddress",
-              type: "address",
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "owner",
-              type: "address",
-            },
-            {
-              indexed: false,
-              internalType: "string",
-              name: "cid",
-              type: "string",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "amount",
-              type: "uint256",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "stakeAmount",
-              type: "uint256",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "duration",
-              type: "uint256",
-            },
-          ],
-          name: "BountyCreated",
-          type: "event",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
               name: "_owner",
               type: "address",
+              internalType: "address",
             },
             {
-              internalType: "string",
               name: "_cid",
               type: "string",
+              internalType: "string",
             },
             {
-              internalType: "uint256",
               name: "_stakeAmount",
               type: "uint256",
+              internalType: "uint256",
             },
             {
-              internalType: "uint256",
               name: "_duration",
               type: "uint256",
+              internalType: "uint256",
             },
           ],
-          name: "createBounty",
           outputs: [
             {
-              internalType: "address",
               name: "",
               type: "address",
+              internalType: "address",
             },
           ],
           stateMutability: "payable",
-          type: "function",
         },
         {
+          type: "function",
+          name: "deployedBounties",
           inputs: [
             {
-              internalType: "uint256",
               name: "",
               type: "uint256",
+              internalType: "uint256",
             },
           ],
-          name: "deployedBounties",
           outputs: [
             {
-              internalType: "address",
               name: "",
               type: "address",
+              internalType: "address",
             },
           ],
           stateMutability: "view",
-          type: "function",
         },
         {
-          inputs: [],
+          type: "function",
           name: "getDeployedBounties",
+          inputs: [],
           outputs: [
             {
-              internalType: "address[]",
               name: "",
               type: "address[]",
+              internalType: "address[]",
             },
           ],
           stateMutability: "view",
-          type: "function",
+        },
+        {
+          type: "event",
+          name: "BountyCreated",
+          inputs: [
+            {
+              name: "bountyAddress",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "owner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "cid",
+              type: "string",
+              indexed: false,
+              internalType: "string",
+            },
+            {
+              name: "amount",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "stakeAmount",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "duration",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 2,
+      deployedOnBlock: 1,
     },
   },
   11155111: {
     BountyFactory: {
-      address: "0xa972f4a44fe8e189a5d5472f995b584142078673",
+      address: "0x3f8227f0097c28969084056e71bdae4aa7b019c8",
       abi: [
         {
+          type: "constructor",
           inputs: [],
           stateMutability: "nonpayable",
-          type: "constructor",
         },
         {
-          anonymous: false,
+          type: "function",
+          name: "createBounty",
           inputs: [
             {
-              indexed: true,
-              internalType: "address",
-              name: "bountyAddress",
-              type: "address",
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "owner",
-              type: "address",
-            },
-            {
-              indexed: false,
-              internalType: "string",
-              name: "cid",
-              type: "string",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "amount",
-              type: "uint256",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "stakeAmount",
-              type: "uint256",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "duration",
-              type: "uint256",
-            },
-          ],
-          name: "BountyCreated",
-          type: "event",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
               name: "_owner",
               type: "address",
+              internalType: "address",
             },
             {
-              internalType: "string",
               name: "_cid",
               type: "string",
+              internalType: "string",
             },
             {
-              internalType: "uint256",
               name: "_stakeAmount",
               type: "uint256",
+              internalType: "uint256",
             },
             {
-              internalType: "uint256",
               name: "_duration",
               type: "uint256",
+              internalType: "uint256",
             },
           ],
-          name: "createBounty",
           outputs: [
             {
-              internalType: "address",
               name: "",
               type: "address",
+              internalType: "address",
             },
           ],
           stateMutability: "payable",
-          type: "function",
         },
         {
+          type: "function",
+          name: "deployedBounties",
           inputs: [
             {
-              internalType: "uint256",
               name: "",
               type: "uint256",
+              internalType: "uint256",
             },
           ],
-          name: "deployedBounties",
           outputs: [
             {
-              internalType: "address",
               name: "",
               type: "address",
+              internalType: "address",
             },
           ],
           stateMutability: "view",
-          type: "function",
         },
         {
-          inputs: [],
+          type: "function",
           name: "getDeployedBounties",
+          inputs: [],
           outputs: [
             {
-              internalType: "address[]",
               name: "",
               type: "address[]",
+              internalType: "address[]",
             },
           ],
           stateMutability: "view",
-          type: "function",
+        },
+        {
+          type: "event",
+          name: "BountyCreated",
+          inputs: [
+            {
+              name: "bountyAddress",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "owner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "cid",
+              type: "string",
+              indexed: false,
+              internalType: "string",
+            },
+            {
+              name: "amount",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "stakeAmount",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "duration",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 9487247,
+      deployedOnBlock: 10155442,
     },
   },
 } as const;

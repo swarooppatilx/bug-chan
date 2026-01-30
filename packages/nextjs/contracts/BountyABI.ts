@@ -1,6 +1,12 @@
 // Enum string maps for UI
 export const BountyStatus = ["Open", "Closed"] as const;
-export const SubmissionStatus = ["None", "Pending", "Accepted", "Rejected", "Refunded"] as const;
+export const SubmissionStatus = [
+  "None",
+  "Pending",
+  "Accepted",
+  "Rejected",
+  "Refunded",
+] as const;
 
 // The ABI can be found in packages/hardhat/generated/artifacts/Bounty.js
 export const bountyABI = [
@@ -223,13 +229,6 @@ export const bountyABI = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "fixInProgress",
-    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [{ internalType: "address", name: "_researcher", type: "address" }],
     name: "getSubmission",
     outputs: [
@@ -256,25 +255,8 @@ export const bountyABI = [
     type: "function",
   },
   {
-    inputs: [
-      { internalType: "address", name: "_researcher", type: "address" },
-      { internalType: "string", name: "_publicCid", type: "string" },
-    ],
-    name: "rejectAndPublish",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
     inputs: [{ internalType: "address", name: "_researcher", type: "address" }],
     name: "rejectSubmission",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "bool", name: "_inProgress", type: "bool" }],
-    name: "setFixInProgress",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
