@@ -21,6 +21,7 @@ type ReportItem = {
   amount: bigint;
   stake: bigint;
   visibility: number;
+  severity: number;
 };
 
 // Consistent badge styles
@@ -30,10 +31,30 @@ const BADGE_GREEN = `${BADGE_BASE} bg-green-900/30 border-green-700 text-green-4
 const BADGE_RED = `${BADGE_BASE} bg-red-900/30 border-red-700 text-red-400`;
 const BADGE_GRAY = `${BADGE_BASE} bg-gray-800 border-gray-700 text-gray-400`;
 const BADGE_PRIMARY = `${BADGE_BASE} bg-black border-[var(--color-secondary)]/30 text-[var(--color-secondary)]`;
+const BADGE_YELLOW = `${BADGE_BASE} bg-yellow-900/30 border-yellow-700 text-yellow-400`;
+const BADGE_ORANGE = `${BADGE_BASE} bg-orange-900/30 border-orange-700 text-orange-400`;
+
+// Severity levels - must match contract enum
+const SeverityLabels = ["None", "Low", "Medium", "High", "Critical"] as const;
+
+const getSeverityBadgeClass = (severity: number) => {
+  switch (severity) {
+    case 1:
+      return BADGE_GREEN; // Low
+    case 2:
+      return BADGE_YELLOW; // Medium
+    case 3:
+      return BADGE_ORANGE; // High
+    case 4:
+      return BADGE_RED; // Critical
+    default:
+      return BADGE_GRAY; // None
+  }
+};
 
 export default function ReportsPage() {
   const { address: connectedAddress } = useAccount();
-  const [activeTab, setActiveTab] = useState<"All" | "Created" | "Submitted">("All");
+  const [activeTab, setActiveTab] = useState<"All" | "Created" | "Submitted" | "Triaged">("All");
   const { targetNetwork } = useTargetNetwork();
   const publicClient = usePublicClient({ chainId: targetNetwork.id });
   const [committedMap, setCommittedMap] = useState<Map<string, bigint>>(new Map());
@@ -80,12 +101,13 @@ export default function ReportsPage() {
     watch: true,
   });
 
-  // Phase 1: read owners/status/amount for all bounties
+  // Phase 1: read owners/status/amount/triager for all bounties
   const baseReads = useMemo(() => {
     return (deployedBounties || []).flatMap(addr => [
       { address: addr as `0x${string}`, abi: bountyABI, functionName: "owner" },
       { address: addr as `0x${string}`, abi: bountyABI, functionName: "status" },
       { address: addr as `0x${string}`, abi: bountyABI, functionName: "amount" },
+      { address: addr as `0x${string}`, abi: bountyABI, functionName: "triager" },
     ]);
   }, [deployedBounties]);
 
@@ -94,18 +116,19 @@ export default function ReportsPage() {
     query: { refetchInterval: 20000 },
   });
 
-  // Map all bounties to owner/status/amount + list those owned by the connected user
+  // Map all bounties to owner/status/amount/triager + list those owned by the connected user
   const bountyInfo = useMemo(() => {
     if (!baseData || !deployedBounties)
-      return [] as { addr: `0x${string}`; owner: string; status: number; amount: bigint }[];
-    const all: { addr: `0x${string}`; owner: string; status: number; amount: bigint }[] = [];
-    for (let i = 0; i < baseData.length; i += 3) {
-      const idx = i / 3;
+      return [] as { addr: `0x${string}`; owner: string; status: number; amount: bigint; triager: string }[];
+    const all: { addr: `0x${string}`; owner: string; status: number; amount: bigint; triager: string }[] = [];
+    for (let i = 0; i < baseData.length; i += 4) {
+      const idx = i / 4;
       all.push({
         addr: deployedBounties[idx] as `0x${string}`,
         owner: (baseData[i]?.result || "0x0") as string,
         status: (baseData[i + 1]?.result || 0) as number,
         amount: (baseData[i + 2]?.result || 0n) as bigint,
+        triager: (baseData[i + 3]?.result || "0x0000000000000000000000000000000000000000") as string,
       });
     }
     return all;
@@ -113,9 +136,21 @@ export default function ReportsPage() {
 
   const ownedBounties: { addr: `0x${string}`; status: number; amount: bigint }[] = useMemo(() => {
     if (!connectedAddress) return [];
-    return (bountyInfo as { addr: `0x${string}`; owner: string; status: number; amount: bigint }[])
+    return (bountyInfo as { addr: `0x${string}`; owner: string; status: number; amount: bigint; triager: string }[])
       .filter(b => b.owner.toLowerCase() === connectedAddress.toLowerCase())
       .map(b => ({ addr: b.addr, status: b.status, amount: b.amount }));
+  }, [bountyInfo, connectedAddress]);
+
+  // Bounties where user is the triager (but not owner)
+  const triagedBounties: { addr: `0x${string}`; owner: string; status: number; amount: bigint }[] = useMemo(() => {
+    if (!connectedAddress) return [];
+    return (bountyInfo as { addr: `0x${string}`; owner: string; status: number; amount: bigint; triager: string }[])
+      .filter(
+        b =>
+          b.triager.toLowerCase() === connectedAddress.toLowerCase() &&
+          b.triager !== "0x0000000000000000000000000000000000000000",
+      )
+      .map(b => ({ addr: b.addr, owner: b.owner, status: b.status, amount: b.amount }));
   }, [bountyInfo, connectedAddress]);
 
   // Phase 2: for owned bounties, fetch submitters
@@ -124,7 +159,13 @@ export default function ReportsPage() {
     query: { refetchInterval: 20000, enabled: ownedBounties.length > 0 },
   });
 
-  // Build list of (bounty, submitter) pairs
+  // Phase 2b: for triaged bounties, fetch submitters
+  const { data: triagedSubmittersData, isLoading: isLoadingTriagedSubmitters } = useReadContracts({
+    contracts: triagedBounties.map(b => ({ address: b.addr, abi: bountyABI, functionName: "getSubmitters" })),
+    query: { refetchInterval: 20000, enabled: triagedBounties.length > 0 },
+  });
+
+  // Build list of (bounty, submitter) pairs for owned bounties
   const pairs = useMemo(() => {
     const out: { bounty: `0x${string}`; submitter: `0x${string}` }[] = [];
     if (!submittersData) return out;
@@ -136,7 +177,19 @@ export default function ReportsPage() {
     return out;
   }, [submittersData, ownedBounties]);
 
-  // Phase 3: fetch each submission tuple
+  // Build list of (bounty, submitter) pairs for triaged bounties
+  const triagedPairs = useMemo(() => {
+    const out: { bounty: `0x${string}`; submitter: `0x${string}`; owner: string }[] = [];
+    if (!triagedSubmittersData) return out;
+    triagedSubmittersData.forEach((res, i) => {
+      const b = triagedBounties[i];
+      const subs = ((res?.result as string[]) || []) as `0x${string}`[];
+      subs.forEach(s => out.push({ bounty: b.addr, submitter: s, owner: b.owner }));
+    });
+    return out;
+  }, [triagedSubmittersData, triagedBounties]);
+
+  // Phase 3: fetch each submission tuple for owned bounties
   const { data: submissionTuples, isLoading: isLoadingSubs } = useReadContracts({
     contracts: pairs.map(p => ({
       address: p.bounty,
@@ -147,11 +200,22 @@ export default function ReportsPage() {
     query: { refetchInterval: 20000, enabled: pairs.length > 0 },
   });
 
+  // Phase 3b: fetch each submission tuple for triaged bounties
+  const { data: triagedSubmissionTuples, isLoading: isLoadingTriagedSubs } = useReadContracts({
+    contracts: triagedPairs.map(p => ({
+      address: p.bounty,
+      abi: bountyABI,
+      functionName: "getSubmission",
+      args: [p.submitter],
+    })),
+    query: { refetchInterval: 20000, enabled: triagedPairs.length > 0 },
+  });
+
   const createdReports: ReportItem[] = useMemo(() => {
     if (!submissionTuples) return [];
     const out: ReportItem[] = [];
     submissionTuples.forEach((res, i) => {
-      const tuple = res?.result as [string, bigint, number, number] | undefined;
+      const tuple = res?.result as [string, bigint, number, number, number] | undefined;
       if (!tuple) return;
       const { bounty, submitter } = pairs[i];
       const owned = ownedBounties.find(b => b.addr === bounty);
@@ -160,6 +224,7 @@ export default function ReportsPage() {
       const stake = tuple[1];
       const subState = Number(tuple[2] || 0);
       const visibility = Number(tuple[3] || 0);
+      const severity = Number(tuple[4] || 0);
       if (!reportCid) return;
       out.push({
         bounty,
@@ -171,10 +236,43 @@ export default function ReportsPage() {
         amount: (committedMap.get((bounty as string).toLowerCase()) as bigint | undefined) ?? owned.amount,
         stake,
         visibility,
+        severity,
       });
     });
     return out;
   }, [submissionTuples, pairs, ownedBounties, connectedAddress, committedMap]);
+
+  // Reports for bounties where user is the triager
+  const triagedReports: ReportItem[] = useMemo(() => {
+    if (!triagedSubmissionTuples) return [];
+    const out: ReportItem[] = [];
+    triagedSubmissionTuples.forEach((res, i) => {
+      const tuple = res?.result as [string, bigint, number, number, number] | undefined;
+      if (!tuple) return;
+      const { bounty, submitter, owner } = triagedPairs[i];
+      const triaged = triagedBounties.find(b => b.addr === bounty);
+      if (!triaged) return;
+      const reportCid = tuple[0];
+      const stake = tuple[1];
+      const subState = Number(tuple[2] || 0);
+      const visibility = Number(tuple[3] || 0);
+      const severity = Number(tuple[4] || 0);
+      if (!reportCid) return;
+      out.push({
+        bounty,
+        owner,
+        researcher: submitter,
+        reportCid,
+        bountyStatus: triaged.status,
+        subState,
+        amount: (committedMap.get((bounty as string).toLowerCase()) as bigint | undefined) ?? triaged.amount,
+        stake,
+        visibility,
+        severity,
+      });
+    });
+    return out;
+  }, [triagedSubmissionTuples, triagedPairs, triagedBounties, committedMap]);
 
   // Researcher's submissions across all bounties
   const { data: mySubmissionTuples, isLoading: isLoadingMySubs } = useReadContracts({
@@ -198,7 +296,7 @@ export default function ReportsPage() {
       infoMap.set(b.addr, { owner: b.owner, status: b.status, amount: b.amount }),
     );
     mySubmissionTuples.forEach((res, i) => {
-      const tuple = res?.result as [string, bigint, number, number] | undefined;
+      const tuple = res?.result as [string, bigint, number, number, number] | undefined;
       if (!tuple) return;
       const bounty = deployedBounties[i] as `0x${string}`;
       const reportCid = tuple[0];
@@ -206,6 +304,7 @@ export default function ReportsPage() {
       const stake = tuple[1];
       const subState = Number(tuple[2] || 0);
       const visibility = Number(tuple[3] || 0);
+      const severity = Number(tuple[4] || 0);
       const info = infoMap.get(bounty);
       if (!info) return;
       out.push({
@@ -218,6 +317,7 @@ export default function ReportsPage() {
         amount: (committedMap.get((bounty as string).toLowerCase()) as bigint | undefined) ?? info.amount,
         stake,
         visibility,
+        severity,
       });
     });
     return out;
@@ -226,27 +326,32 @@ export default function ReportsPage() {
   const allReports: ReportItem[] = useMemo(() => {
     const map = new Map<string, ReportItem>();
     createdReports.forEach(r => map.set(`${r.bounty}-${r.researcher}`.toLowerCase(), r));
+    triagedReports.forEach(r => map.set(`${r.bounty}-${r.researcher}`.toLowerCase(), r));
     submittedReports.forEach(r => map.set(`${r.bounty}-${r.researcher}`.toLowerCase(), r));
     return Array.from(map.values());
-  }, [createdReports, submittedReports]);
+  }, [createdReports, triagedReports, submittedReports]);
 
   const filtered = useMemo(() => {
     switch (activeTab) {
       case "Created":
         return createdReports;
+      case "Triaged":
+        return triagedReports;
       case "Submitted":
         return submittedReports;
       case "All":
       default:
         return allReports;
     }
-  }, [activeTab, createdReports, submittedReports, allReports]);
+  }, [activeTab, createdReports, triagedReports, submittedReports, allReports]);
 
   const isLoading =
     isLoadingAddresses ||
     (isLoadingBase && (deployedBounties?.length || 0) > 0) ||
     (isLoadingSubmitters && ownedBounties.length > 0) ||
+    (isLoadingTriagedSubmitters && triagedBounties.length > 0) ||
     (isLoadingSubs && pairs.length > 0) ||
+    (isLoadingTriagedSubs && triagedPairs.length > 0) ||
     (isLoadingMySubs && (deployedBounties?.length || 0) > 0);
 
   return (
@@ -286,6 +391,16 @@ export default function ReportsPage() {
             onClick={() => setActiveTab("Submitted")}
           >
             My Submissions
+          </button>
+          <button
+            className={`px-4 py-2 font-roboto text-sm font-medium transition-all duration-300 ${
+              activeTab === "Triaged"
+                ? "bg-[var(--color-primary)] text-white"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            }`}
+            onClick={() => setActiveTab("Triaged")}
+          >
+            Triaging
           </button>
         </div>
       </div>
@@ -343,6 +458,11 @@ export default function ReportsPage() {
                     <span className={r.visibility === 1 ? BADGE_GREEN : BADGE_GRAY}>
                       {r.visibility === 1 ? "Public" : "Private"}
                     </span>
+                    {r.severity > 0 && (
+                      <span className={getSeverityBadgeClass(r.severity)}>
+                        {SeverityLabels[r.severity]}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="mt-2 space-y-3 text-sm">

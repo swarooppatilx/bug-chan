@@ -22,6 +22,7 @@ type BountyCardProps = {
   cid: string;
   submissionCount: number;
   hasSubmitted: boolean;
+  isTriager: boolean;
   connectedAddress?: string | undefined;
 };
 
@@ -33,12 +34,12 @@ const BountyCard = ({
   cid,
   submissionCount,
   hasSubmitted,
+  isTriager,
   connectedAddress,
 }: BountyCardProps) => {
   const [metadata, setMetadata] = useState({
     title: "Loading bounty details...",
     description: "...",
-    severity: "Medium",
   });
   const [isMetadataLoading, setIsMetadataLoading] = useState(true);
 
@@ -48,7 +49,6 @@ const BountyCard = ({
         setMetadata({
           title: `Bounty: ${id.substring(0, 8)}...`,
           description: "No metadata found.",
-          severity: "Medium",
         });
         setIsMetadataLoading(false);
         return;
@@ -62,7 +62,6 @@ const BountyCard = ({
         setMetadata({
           title: data.title || `Bounty: ${id.substring(0, 8)}...`,
           description: data.description || "No description available.",
-          severity: data.severity || "Medium",
         });
       } catch (error) {
         console.error("Failed to fetch bounty metadata:", error);
@@ -86,10 +85,11 @@ const BountyCard = ({
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex flex-row gap-4">
-          {" "}
-          <div className={`px-3 py-1 text-xs font-roboto font-medium ${getSeverityColor(metadata.severity)}`}>
-            {metadata.severity}
-          </div>
+          {isTriager && (
+            <div className="px-2 py-1 bg-purple-900/30 text-purple-400 border border-purple-700 text-xs font-roboto">
+              Triager
+            </div>
+          )}
           {hasSubmitted && connectedAddress && (
             <Link
               href={`/reports/${id}?researcher=${connectedAddress}`}
@@ -202,6 +202,7 @@ export default function BountiesPage() {
       { address, abi: bountyABI, functionName: "status" },
       { address, abi: bountyABI, functionName: "cid" },
       { address, abi: bountyABI, functionName: "getSubmitters" },
+      { address, abi: bountyABI, functionName: "triager" },
     ]);
   }, [deployedBounties]);
 
@@ -223,13 +224,20 @@ export default function BountiesPage() {
       cid: string;
       submissionCount: number;
       hasSubmitted: boolean;
+      triager: string;
+      isTriager: boolean;
     }> = [];
-    for (let i = 0; i < bountiesOnChainData.length; i += 5) {
-      const bountyIndex = i / 5;
+    for (let i = 0; i < bountiesOnChainData.length; i += 6) {
+      const bountyIndex = i / 6;
       const submitters = (bountiesOnChainData[i + 4]?.result as string[]) || [];
       const hasSubmitted = !!(
         connectedAddress && submitters.some(s => s.toLowerCase() === connectedAddress.toLowerCase())
       );
+      const triager = (bountiesOnChainData[i + 5]?.result as string) || "0x0000000000000000000000000000000000000000";
+      const isTriager =
+        !!connectedAddress &&
+        triager.toLowerCase() === connectedAddress.toLowerCase() &&
+        triager !== "0x0000000000000000000000000000000000000000";
       processedBounties.push({
         id: deployedBounties[bountyIndex] as string,
         owner: bountiesOnChainData[i]?.result as string,
@@ -240,6 +248,8 @@ export default function BountiesPage() {
         cid: bountiesOnChainData[i + 3]?.result as string,
         submissionCount: submitters.length,
         hasSubmitted,
+        triager,
+        isTriager,
       });
     }
     return processedBounties.sort((a, b) => a.status - b.status);
@@ -296,6 +306,7 @@ export default function BountiesPage() {
               cid={bounty.cid}
               submissionCount={bounty.submissionCount}
               hasSubmitted={bounty.hasSubmitted}
+              isTriager={bounty.isTriager}
               connectedAddress={connectedAddress}
             />
           ))}
@@ -304,21 +315,6 @@ export default function BountiesPage() {
     </div>
   );
 }
-
-const getSeverityColor = (severity: string) => {
-  switch (severity) {
-    case "Low":
-      return "bg-green-900/30 text-green-400 border border-green-700";
-    case "Medium":
-      return "bg-yellow-900/30 text-yellow-400 border border-yellow-700";
-    case "High":
-      return "bg-orange-900/30 text-orange-400 border border-orange-700";
-    case "Critical":
-      return "bg-red-900/30 text-red-400 border border-red-700";
-    default:
-      return "bg-gray-800 text-gray-400 border border-gray-700";
-  }
-};
 
 const getStatusColor = (status: string) => {
   switch (status) {

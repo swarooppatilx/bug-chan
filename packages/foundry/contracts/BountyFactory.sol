@@ -16,7 +16,8 @@ contract BountyFactory {
         string cid,
         uint256 amount,
         uint256 stakeAmount,
-        uint256 duration
+        uint256 duration,
+        address triager
     );
 
     constructor() {}
@@ -25,21 +26,23 @@ contract BountyFactory {
      * @dev Creates and deploys a new Bounty contract, funding it with the sent ETH.
      * @param _owner The address that will own the new bounty.
      * @param _cid The IPFS CID for the bounty's metadata.
+     * @param _triager The address that will triage submissions (can be zero address).
      * @return The address of the newly created Bounty contract.
      */
     function createBounty(
         address _owner,
         string memory _cid,
         uint256 _stakeAmount,
-        uint256 _duration
+        uint256 _duration,
+        address _triager
     ) external payable returns (address) {
         // Forward ETH to new bounty as reward pool
-        Bounty newBounty = new Bounty{ value: msg.value }(_owner, _cid, _stakeAmount, _duration);
+        Bounty newBounty = new Bounty{ value: msg.value }(_owner, _cid, _stakeAmount, _duration, _triager);
 
         address newBountyAddress = address(newBounty);
         deployedBounties.push(newBountyAddress);
 
-        emit BountyCreated(newBountyAddress, _owner, _cid, msg.value, _stakeAmount, _duration);
+        emit BountyCreated(newBountyAddress, _owner, _cid, msg.value, _stakeAmount, _duration, _triager);
         return newBountyAddress;
     }
 

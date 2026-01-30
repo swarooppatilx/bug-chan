@@ -2,7 +2,7 @@ import fs from "fs";
 import type { Metadata } from "next";
 import path from "path";
 import { Address } from "viem";
-import { hardhat } from "viem/chains";
+import { anvil } from "viem/chains";
 import { AddressComponent } from "~~/app/blockexplorer/_components/AddressComponent";
 import deployedContracts from "~~/contracts/deployedContracts";
 import { isZeroAddress } from "~~/utils/scaffold-eth/common";
@@ -46,7 +46,7 @@ async function fetchByteCodeAndAssembly(buildInfoDirectory: string, contractPath
 
 const getContractData = async (address: Address) => {
   const contracts = deployedContracts as GenericContractsDeclaration | null;
-  const chainId = hardhat.id;
+  const chainId = anvil.id;
 
   if (!contracts || !contracts[chainId] || Object.keys(contracts[chainId]).length === 0) {
     return null;
@@ -63,7 +63,7 @@ const getContractData = async (address: Address) => {
     "..",
     "..",
     "..",
-    "hardhat",
+    "anvil",
     "artifacts",
     "build-info",
   );
