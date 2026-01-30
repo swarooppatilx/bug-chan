@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { getJWT } from "@lighthouse-web3/kavach";
 import lighthouse from "@lighthouse-web3/sdk";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { formatEther, parseAbiItem, parseEther } from "viem";
 import {
   useAccount,
@@ -14,6 +16,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { BugAntIcon } from "@heroicons/react/24/outline";
+import MDEditor from "~~/components/MDEditor";
 import { Address } from "~~/components/scaffold-eth";
 import { BountyStatus, bountyABI } from "~~/contracts/BountyABI";
 import deployedContracts from "~~/contracts/deployedContracts";
@@ -264,7 +267,9 @@ export default function BountyDetailsPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-akira mb-3 text-white">{metadata.title}</h2>
-            <p className="whitespace-pre-wrap text-gray-300 font-roboto leading-relaxed">{metadata.description}</p>
+            <div className="markdown-content">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{metadata.description}</ReactMarkdown>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-800">
@@ -388,19 +393,7 @@ export default function BountyDetailsPage() {
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                   />
-                  <div>
-                    <textarea
-                      className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors min-h-40"
-                      placeholder="Describe the vulnerability, reproduction steps, expected vs actual behavior, impacted components, and potential impact..."
-                      value={description}
-                      onChange={e => setDescription(e.target.value)}
-                      maxLength={5000}
-                    />
-                    <div className="mt-2 flex justify-between text-xs text-gray-500 font-roboto">
-                      <span>Tip: Include minimal PoC or steps to reproduce.</span>
-                      <span>{description.length}/5000</span>
-                    </div>
-                  </div>
+                  <MDEditor value={description} setValue={setDescription} />
                   <input
                     type="text"
                     placeholder="Contact (email, Telegram, ENS, etc.)"

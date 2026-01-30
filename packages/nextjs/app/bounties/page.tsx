@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { formatEther, parseAbiItem } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import { useReadContracts } from "wagmi";
@@ -103,7 +105,9 @@ const BountyCard = ({
         </div>
       </div>
       <h2 className="text-xl font-akira mb-3 text-white truncate">{metadata.title}</h2>
-      <p className="mb-4 line-clamp-2 h-12 text-gray-400 font-roboto text-sm">{metadata.description}</p>
+      <div className="markdown-content max-h-14 overflow-hidden">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{metadata.description}</ReactMarkdown>
+      </div>
       <div className="flex justify-between items-center text-sm mb-4 pt-4 border-t border-gray-800">
         <div>
           <p className="text-gray-500 font-roboto text-xs mb-1">Reward</p>

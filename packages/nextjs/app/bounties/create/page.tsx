@@ -13,6 +13,7 @@ import {
   ShieldExclamationIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import MDEditor from "~~/components/MDEditor";
 import { AddressInput, EtherInput } from "~~/components/scaffold-eth";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
@@ -133,14 +134,7 @@ export default function CreateBountyPage() {
           </FormField>
 
           <FormField label="Description" icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />}>
-            <textarea
-              value={form.description}
-              onChange={e => setForm({ ...form, description: e.target.value })}
-              className="w-full px-4 py-3 bg-black border border-gray-800 text-white font-roboto focus:outline-none focus:border-[var(--color-secondary)]/50 transition-colors min-h-32"
-              rows={6}
-              placeholder="Describe the scope, vulnerability impact, and requirements for this bounty..."
-              required
-            />
+            <MDEditor value={form.description} setValue={(value: string) => setForm({ ...form, description: value })} />
           </FormField>
 
           <div className="pt-4 border-t border-gray-800">
