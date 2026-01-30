@@ -423,8 +423,9 @@ function PublicReport({ cid }: { cid: string }) {
       {data.description && (
         <div>
           <strong className="text-gray-400 font-roboto text-sm block mb-2">Description:</strong>
-          {/* TODO: Format into markdown */}
-          <p className="whitespace-pre-wrap text-gray-300 font-roboto leading-relaxed">{data.description}</p>
+          <div className="markdown-content">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.description}</ReactMarkdown>
+          </div>
         </div>
       )}
       {data.contact && (
