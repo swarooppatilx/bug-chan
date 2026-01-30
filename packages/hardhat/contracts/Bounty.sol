@@ -24,7 +24,7 @@ contract Bounty {
     // Visibility for submissions
     enum Visibility {
         Private, // encrypted CID (off-chain decryption)
-        Public   // plaintext CID (public)
+        Public // plaintext CID (public)
     }
 
     address public owner;
@@ -128,8 +128,6 @@ contract Bounty {
         emit SubmissionRejected(_researcher);
     }
 
-
-
     /**
      * @dev Allows owner to close the bounty at any time. Distributes rewards and refunds stakes.
      */
@@ -230,7 +228,9 @@ contract Bounty {
     /**
      * @dev Returns a submission details for a given researcher.
      */
-    function getSubmission(address _researcher) external view returns (string memory, uint256, SubmissionState, Visibility) {
+    function getSubmission(
+        address _researcher
+    ) external view returns (string memory, uint256, SubmissionState, Visibility) {
         Submission storage s = _submissions[_researcher];
         return (s.reportCid, s.stake, s.state, s.visibility);
     }

@@ -33,7 +33,6 @@ export const Footer = () => {
               </a>
               <span className="text-gray-600">·</span>
             </div>
-            <p className="text-xs font-roboto text-gray-500">Built for ETHOnline 2025</p>
           </div>
         </div>
       </div>

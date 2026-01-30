@@ -1,5 +1,5 @@
 # BugChan
-[BugChan](https://bugchan.xyz) is a decentralized bug-bounty platform built at [ETHOnline 2025](https://ethglobal.com/events/ethonline2025/). It makes vulnerability disclosure transparent, trustless, and censorship-resistant by combining on‑chain escrow, encrypted off‑chain reports, and a robust, incentive-aligned workflow.
+[BugChan](https://bugchan.xyz) is a decentralized bug-bounty platform. It makes vulnerability disclosure transparent, trustless, and censorship-resistant by combining on‑chain escrow, encrypted off‑chain reports, and a robust, incentive-aligned workflow.
 
 ---
 
